@@ -818,7 +818,7 @@
   }
   /* ---------- 랭킹: 로그인 없이, 맞이한 손님 수로 겨뤄요 ---------- */
   // Firebase Realtime Database 주소를 넣으면 켜져요 (끝에 / 없이). 만드는 법은 RANKING.md
-  const RANK_URL = '';
+  const RANK_URL = 'https://ddoonsen-default-rtdb.firebaseio.com';
   const RANK_TOP = 50, RANK_EVERY = 60000;       // 보여 줄 등수, 내 기록을 올리는 간격(ms)
   const rank = { rows:null, state:'', sentServed:-1, sentNick:'', sentAt:-RANK_EVERY };
   const rankNick = () => Array.from(save.nick).slice(0, 12).join('');
