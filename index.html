@@ -825,7 +825,7 @@
   /* ---------- 랭킹: 로그인 없이, 맞이한 손님 수로 겨뤄요 ---------- */
   // Firebase Realtime Database 주소를 넣으면 켜져요 (끝에 / 없이). 만드는 법은 RANKING.md
   const RANK_URL = 'https://ddoonsen-default-rtdb.firebaseio.com';
-  const RANK_TOP = 50, RANK_EVERY = 60000;       // 보여 줄 등수, 내 기록을 올리는 간격(ms)
+  const RANK_TOP = 1000, RANK_EVERY = 60000;     // 한 번에 받아 올 사람 수(해 본 사람 모두를 보여 줘요), 내 기록을 올리는 간격(ms)
   const RANK_ONLINE = 150000;                    // 마지막 소식이 이보다 오래되면 오프라인으로 봐요 (ms)
   const rank = { rows:null, state:'', sentServed:-1, sentNick:'', sentAt:-RANK_EVERY, skew:0, now:0 };   // skew: 서버 시계 - 내 시계
   const rankNick = () => Array.from(save.nick).slice(0, 12).join('');
@@ -1077,7 +1077,7 @@
         : `<div class="sub">내 기록${rows.length >= RANK_TOP ? ` (${RANK_TOP}위 밖)` : ''}</div>` + line(0, mine, true);
       sheetList.innerHTML = !RANK_URL ? '<div class="empty">랭킹 서버가 아직 연결되지 않았어요.</div><div class="sub">내 기록</div>' + line(0, mine, true)
         : !rank.rows ? `<div class="empty">${rank.state === 'fail' ? '랭킹을 불러오지 못했어요.<br>인터넷 연결을 확인해 주세요.' : '랭킹을 불러오는 중…'}</div>` + (rank.state === 'fail' ? '<button class="act wide" data-rankload="1">다시 불러오기</button>' : '')
-        : `<div class="avg">손님이 많은 온천 ${RANK_TOP}곳</div>` + (list || '<div class="empty">아직 아무도 없어요. 첫 번째가 되어 보세요!</div>') + tail
+        : `<div class="avg">온천 ${rows.length.toLocaleString('ko-KR')}곳의 순위</div>` + (list || '<div class="empty">아직 아무도 없어요. 첫 번째가 되어 보세요!</div>') + tail
           + (rank.state === 'fail' ? '<div class="desc" style="font-size:3.3cqw;opacity:.75;text-align:center">새로 불러오지 못해서 조금 전 순위를 보여 드려요</div>' : '')
           + `<button class="act wide" data-rankload="1" ${rank.state === 'loading' ? 'disabled' : ''}>${rank.state === 'loading' ? '불러오는 중…' : '새로 고침'}</button>`;
       return;
