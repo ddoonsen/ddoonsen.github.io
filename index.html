@@ -19,14 +19,14 @@
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
   html,body{height:100%;margin:0}
   body{
-    background:var(--wood); color:var(--ink);
+    background:var(--wall); color:var(--ink);            /* 양옆 남는 자리는 벽 색, 갈색은 게임 아래에만 */
     font-family:"Sehyun","UhBee Se_hyun","Gaegu","Apple SD Gothic Neo","Malgun Gothic",sans-serif;
     display:flex; align-items:flex-start; justify-content:center;
     overscroll-behavior:none; touch-action:manipulation; user-select:none; -webkit-user-select:none;
   }
   .game{
-    width:min(100vw, calc(100dvh - 229px), 760px);
-    display:flex; flex-direction:column;
+    width:min(100vw, calc(100dvh - 229px));
+    min-height:100dvh; display:flex; flex-direction:column;
   }
   .scene{
     position:relative; width:100%; aspect-ratio:1/1;
@@ -79,6 +79,13 @@
   .empty{font-size:3.8cqw; text-align:center; padding:6cqw 2cqw; opacity:.75}
   .ohint{position:absolute; top:40%; z-index:3; width:17cqw; padding:1.6cqw 1.6cqw 1.4cqw; background:#fff; border:.6cqw solid var(--ink); cursor:pointer; display:grid; gap:.8cqw; justify-items:center; animation:hintBob .9s ease-in-out infinite alternate}
   .ohint[hidden]{display:none}
+  /* 옆방으로 가는 화살표 (밀지 않고 눌러서도 갈 수 있어요) */
+  .nav{position:absolute; top:31%; z-index:3; width:8.4cqw; height:8.4cqw; padding:0; display:grid; place-items:center; cursor:pointer; background:rgba(255,255,255,.88); border:.55cqw solid var(--ink); border-radius:50%; box-shadow:0 .6cqw 0 var(--ink)}
+  .nav.left{left:1.5cqw} .nav.right{right:1.5cqw}
+  .nav[hidden]{display:none}
+  .nav svg{width:58%; height:58%; display:block}
+  .nav:active{transform:translateY(.4cqw); box-shadow:0 .2cqw 0 var(--ink)}
+  .nav:focus-visible{outline:.7cqw solid var(--red); outline-offset:.3cqw}
   .ohint.left{left:1.5cqw; border-radius:5cqw 5cqw 5cqw 1cqw} .ohint.right{right:1.5cqw; border-radius:5cqw 5cqw 1cqw 5cqw}
   .ohint img{width:11cqw; height:9cqw; object-fit:contain}
   .ohint span{width:100%; height:1.8cqw; border:.4cqw solid var(--ink); border-radius:1cqw; background:#fff; overflow:hidden; display:block}
@@ -218,7 +225,7 @@
   }
   .bag .hint{align-self:center; font-size:18px; font-weight:700; line-height:1.3; padding:0 6px}
   /* 버튼 칸 아래 남는 자리: 상점 */
-  .dock{display:flex; justify-content:center; gap:14px; padding:10px 12px 12px; background:var(--wood)}
+  .dock{display:flex; justify-content:center; align-items:flex-start; flex:1; gap:14px; padding:10px 12px 12px; background:var(--wood)}
   .dockbtn{
     width:64px; height:64px; padding:6px; cursor:pointer; display:grid; place-items:center;
     background:#fff; border:4px solid var(--ink); border-radius:18px; box-shadow:0 5px 0 var(--ink);
@@ -226,16 +233,22 @@
   .dockbtn svg{width:100%; height:100%; display:block}
   .dockbtn{position:relative; flex:0 1 64px; width:auto; height:auto; aspect-ratio:1; min-width:0} .dock{gap:10px}
   /* 랭킹 */
-  .rankrow{display:grid; grid-template-columns:9cqw 1fr auto; gap:2cqw; align-items:center; border:.45cqw solid var(--ink); border-radius:2.6cqw; padding:1.4cqw 2.2cqw; background:#fffdf0; font-size:4cqw}
+  .sheet-wrap.rank .sheet{width:62%; height:95%}
+  .sheet-wrap.rank .list{flex:1; align-content:start}
+  .sheet-wrap.rank .money{display:none} .sheet-wrap.rank .x{margin-left:auto}
+  .sheet-wrap.rank .avg{font-size:3.6cqw}
+  .rankrow{display:grid; grid-template-columns:8cqw 1fr; gap:1.6cqw; align-items:center; border:.45cqw solid var(--ink); border-radius:2.6cqw; padding:1.1cqw 1.8cqw; background:#fffdf0; font-size:4cqw; line-height:1.25}
   .rankrow.me{background:#ffe9a8}
   .rankrow .no{font-weight:700; text-align:center; font-variant-numeric:tabular-nums}
   .rankrow .top{font-size:5.4cqw}
-  .rankrow .who{font-weight:700; overflow-wrap:anywhere; min-width:0}
-  .rankrow .who small{font-size:3.2cqw; font-weight:400; opacity:.75; margin-left:1cqw}
-  .rankrow .n{text-align:right; font-size:3.5cqw; line-height:1.25; font-variant-numeric:tabular-nums}
-  .rankrow .n b{display:block; font-size:4cqw}
-  .dockbtn .dot{position:absolute; top:-7px; right:-7px; width:18px; height:18px; border-radius:50%; background:var(--red, #ff3d28); border:3px solid var(--ink)}
-  .dockbtn .dot[hidden]{display:none}
+  .rankrow .who{min-width:0}
+  .rankrow .who .nm{display:flex; align-items:center; gap:1.5cqw}
+  .rankrow .who b{flex:1; min-width:0; overflow-wrap:anywhere}
+  .rankrow .who b small{font-size:3.2cqw; font-weight:400; opacity:.75; margin-left:1cqw}
+  .rankrow .st{font-size:3cqw; opacity:.6; white-space:nowrap}
+  .rankrow .st::before{content:''; display:inline-block; width:2.2cqw; height:2.2cqw; margin-right:.8cqw; border-radius:50%; background:#b9b2a6; border:.35cqw solid var(--ink); vertical-align:-.2cqw}
+  .rankrow .st.on{opacity:1} .rankrow .st.on::before{background:#3ecb5a}
+  .rankrow .n{display:block; font-size:3.3cqw; font-variant-numeric:tabular-nums}
   .review{border:.45cqw solid var(--ink); border-radius:2.6cqw; padding:1.6cqw 2cqw; background:#fffdf0; display:grid; grid-template-columns:11cqw 1fr; gap:2cqw; align-items:center}
   .review img{width:11cqw; height:11cqw; object-fit:contain}
   .stars{font-size:4.2cqw; color:#ff9d00; letter-spacing:.3cqw} .stars i{font-style:normal; color:#1c1000; opacity:.2}
@@ -343,6 +356,8 @@
       <button class="hot" id="fridgeA" style="left:38%;top:37.5%;width:20.5%;height:22%" aria-label="미니 냉장고 열기"></button>
       <button class="hot" id="trashBtn" style="left:5%;top:27%;width:20%;height:33%" aria-label="쓰레기통 비우기"></button>
     </div>
+    <button class="nav left" id="navL" aria-label="왼쪽 방으로 가기"><svg viewBox="0 0 24 24" fill="none" stroke="#1c1000" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 4l-8 8 8 8"/></svg></button>
+    <button class="nav right" id="navR" aria-label="오른쪽 방으로 가기"><svg viewBox="0 0 24 24" fill="none" stroke="#1c1000" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 4l8 8-8 8"/></svg></button>
     <button class="ohint left" id="hintL" hidden aria-label="왼쪽 방에서 음식 주문"><img alt=""><span><i></i></span></button>
     <button class="ohint right" id="hintR" hidden aria-label="오른쪽 방에서 음식 주문"><img alt=""><span><i></i></span></button>
     <div class="banner" id="banner" role="status"></div>
@@ -819,16 +834,23 @@
   /* ---------- 랭킹: 로그인 없이, 맞이한 손님 수로 겨뤄요 ---------- */
   // Firebase Realtime Database 주소를 넣으면 켜져요 (끝에 / 없이). 만드는 법은 RANKING.md
   const RANK_URL = 'https://ddoonsen-default-rtdb.firebaseio.com';
-  const RANK_TOP = 50, RANK_EVERY = 60000;       // 보여 줄 등수, 내 기록을 올리는 간격(ms)
-  const rank = { rows:null, state:'', sentServed:-1, sentNick:'', sentAt:-RANK_EVERY };
+  const RANK_TOP = 1000, RANK_EVERY = 60000;     // 한 번에 받아 올 사람 수(해 본 사람 모두를 보여 줘요), 내 기록을 올리는 간격(ms)
+  const RANK_ONLINE = 150000;                    // 마지막 소식이 이보다 오래되면 오프라인으로 봐요 (ms)
+  const rank = { rows:null, state:'', sentServed:-1, sentNick:'', sentAt:-RANK_EVERY, skew:0, now:0 };   // skew: 서버 시계 - 내 시계
   const rankNick = () => Array.from(save.nick).slice(0, 12).join('');
-  function rankSend(now) {                        // 내 기록 올리기 (바뀐 게 있을 때만)
+  const rankChanged = () => served !== rank.sentServed || rankNick() !== rank.sentNick;
+  // 내 기록 올리기. 바뀐 게 없어도 게임을 켜 둔 동안은 1분마다 다시 올려서 "접속 중"임을 알려요
+  function rankSend(now) {
     const n = rankNick(), s = served;
-    if (!RANK_URL || !n || s < 1 || (s === rank.sentServed && n === rank.sentNick)) return Promise.resolve();
-    if (!now && performance.now() - rank.sentAt < RANK_EVERY) return Promise.resolve();
+    if (!RANK_URL || !n || s < 1) return Promise.resolve();
+    if (!now && (document.hidden || performance.now() - rank.sentAt < RANK_EVERY - 5000)) return Promise.resolve();
     rank.sentAt = performance.now();
     return fetch(`${RANK_URL}/rank/${save.uid}.json`, { method:'PUT', keepalive:true, headers:{ 'Content-Type':'application/json' }, body:JSON.stringify({ nick:n, served:s, at:{ '.sv':'timestamp' } }) })
-      .then(r => { if (r.ok) { rank.sentServed = s; rank.sentNick = n; } }).catch(() => {});
+      .then(r => r.ok ? r.json() : null).then(v => {
+        if (!v) return;
+        rank.sentServed = s; rank.sentNick = n;
+        if (typeof v.at === 'number') rank.skew = v.at - Date.now();
+      }).catch(() => {});
   }
   function rankLoad() {                           // 내 기록을 올린 다음 순위표를 받아 와요
     if (!RANK_URL || rank.state === 'loading') return;
@@ -837,13 +859,13 @@
       .then(r => r.ok ? r.json() : Promise.reject()).then(data => {
         rank.rows = Object.entries(data || {}).filter(([, v]) => v && typeof v.nick === 'string' && v.served > 0)
           .map(([id, v]) => ({ id, nick:v.nick.slice(0, 20), served:Math.floor(v.served), at:+v.at || 0 }))
-          .sort((a, b) => b.served - a.served || a.at - b.at);
-        rank.state = 'ok';
+          .sort((a, b) => b.served - a.served || (a.id < b.id ? -1 : 1));
+        rank.now = Date.now() + rank.skew; rank.state = 'ok';
       }).catch(() => { rank.state = 'fail'; }).then(() => { if (sheetKind === 'rank') { renderSheet(); } });
   }
   if (RANK_URL) {
     setInterval(() => rankSend(false), RANK_EVERY);
-    document.addEventListener('visibilitychange', () => { if (document.hidden) rankSend(true); });   // 나갈 때 한 번 더
+    document.addEventListener('visibilitychange', () => { if (!document.hidden) rankSend(false); else if (rankChanged()) rankSend(true); });   // 나갈 때 한 번 더, 돌아오면 다시 알려요
   }
   const banner = document.getElementById('banner'); let bannerTimer = 0;
   function announce(text) {
@@ -1056,7 +1078,7 @@
       document.getElementById('sheetTitle').textContent = '랭킹';
       sheetTabs.innerHTML = '';
       const medal = ['🥇', '🥈', '🥉'];
-      const line = (no, r, me) => `<div class="rankrow${me ? ' me' : ''}"><span class="no${no >= 1 && no <= 3 ? ' top' : ''}">${no >= 1 && no <= 3 ? medal[no - 1] : no || '–'}</span><span class="who">${esc(r.nick)}${me ? '<small>나</small>' : ''}</span><span class="n"><b>Lv.${levelOf(r.served)}</b>손님 ${r.served.toLocaleString('ko-KR')}명</span></div>`;
+      const line = (no, r, me) => `<div class="rankrow${me ? ' me' : ''}"><span class="no${no >= 1 && no <= 3 ? ' top' : ''}">${no >= 1 && no <= 3 ? medal[no - 1] : no || '–'}</span><span class="who"><span class="nm"><b>${esc(r.nick)}${me ? '<small>나</small>' : ''}</b>${RANK_URL ? (me || rank.now - r.at < RANK_ONLINE ? '<span class="st on">접속 중</span>' : '<span class="st">오프라인</span>') : ''}</span><span class="n">Lv.${levelOf(r.served)} · 손님 ${r.served.toLocaleString('ko-KR')}명</span></span></div>`;
       const mine = { id:save.uid, nick:rankNick(), served };
       const rows = rank.rows || [], at = rows.findIndex(r => r.id === save.uid);
       const list = rows.map((r, i) => line(i + 1, i === at ? mine : r, i === at)).join('');
@@ -1064,7 +1086,7 @@
         : `<div class="sub">내 기록${rows.length >= RANK_TOP ? ` (${RANK_TOP}위 밖)` : ''}</div>` + line(0, mine, true);
       sheetList.innerHTML = !RANK_URL ? '<div class="empty">랭킹 서버가 아직 연결되지 않았어요.</div><div class="sub">내 기록</div>' + line(0, mine, true)
         : !rank.rows ? `<div class="empty">${rank.state === 'fail' ? '랭킹을 불러오지 못했어요.<br>인터넷 연결을 확인해 주세요.' : '랭킹을 불러오는 중…'}</div>` + (rank.state === 'fail' ? '<button class="act wide" data-rankload="1">다시 불러오기</button>' : '')
-        : `<div class="avg">손님을 많이 맞이한 온천 ${RANK_TOP}곳</div>` + (list || '<div class="empty">아직 아무도 없어요. 첫 번째가 되어 보세요!</div>') + tail
+        : `<div class="avg">온천 ${rows.length.toLocaleString('ko-KR')}곳의 순위</div>` + (list || '<div class="empty">아직 아무도 없어요. 첫 번째가 되어 보세요!</div>') + tail
           + (rank.state === 'fail' ? '<div class="desc" style="font-size:3.3cqw;opacity:.75;text-align:center">새로 불러오지 못해서 조금 전 순위를 보여 드려요</div>' : '')
           + `<button class="act wide" data-rankload="1" ${rank.state === 'loading' ? 'disabled' : ''}>${rank.state === 'loading' ? '불러오는 중…' : '새로 고침'}</button>`;
       return;
@@ -1134,7 +1156,7 @@
     }
   }
   PIC.blank = 'data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==';
-  function openSheet(kind) { sheetKind = kind; sheetWrap.classList.add('open'); renderSheet(); sheetList.scrollTop = 0; }
+  function openSheet(kind) { sheetKind = kind; sheetWrap.classList.add('open'); sheetWrap.classList.toggle('rank', kind === 'rank'); renderSheet(); sheetList.scrollTop = 0; }
   function closeSheet() { sheetKind = null; sheetList.dataset.kind = ''; sheetWrap.classList.remove('open'); }
   document.getElementById('shop').addEventListener('click', () => openSheet('shop'));
   document.getElementById('book').addEventListener('click', () => openSheet('book'));
@@ -1463,9 +1485,9 @@
   let tutAt = -1, tutGuided = 0, tutSide = -1;
   const TUT = [
     { text:'먼저 손님부터 받아 볼까요?\n나비넥타이 또덕이는 왼쪽,\n리본 또덕이는 오른쪽이에요!', target:() => document.querySelector('.guide'), done:() => tutGuided >= 1 },
-    { text:'잘했어요!\n이제 화면을 옆으로 밀어 볼까요?', target:() => scene, hand:'left', done:() => !viewY && view !== 0 },
+    { text:'잘했어요!\n이제 화면을 옆으로 밀거나\n양옆 화살표를 눌러 볼까요?', target:() => scene, hand:'left', done:() => !viewY && view !== 0 },
     { text:'여기가 온천방이에요.\n♨를 누르면 물 색을 바꾸고\n랜턴과 꽥꽥이를 놓을 수 있어요', target:() => currentRoom && document.getElementById(SET_BTN[currentRoom]), ok:true, done:() => !!ROOMS[sheetKind] },
-    { text:'또덕이가 음식을 시키면\n아래 칸에서 눌러서 주면 돼요.\n이제 반대로 밀어 카운터로 돌아가요', target:() => scene, hand:() => tutSide < 0 ? 'right' : 'left', done:atLobby },
+    { text:'또덕이가 음식을 시키면\n아래 칸에서 눌러서 주면 돼요.\n이제 반대쪽으로 카운터에 돌아가요', target:() => scene, hand:() => tutSide < 0 ? 'right' : 'left', done:atLobby },
     { text:'옆으로 계속 밀면 온천방 2와\n맨 끝의 휴게실이 나와요.\n휴게실 쓰레기통이 차면 눌러서 비워 줘요', target:() => scene, ok:true },
     { text:'여기는 상점이에요.\n수건, 샴푸, 음식, 새 탕을 살 수 있어요', target:() => document.getElementById('shop'), ok:true, done:() => sheetKind === 'shop' },
     { text:'책은 단골 도감, 말풍선은 손님 리뷰,\n트로피는 랭킹, 톱니바퀴는 설정이에요.\n준비 끝! 또덕이 온천을 잘 부탁해요', target:() => document.querySelector('.dock'), ok:true },
@@ -1692,6 +1714,9 @@
   }
   const hintL = document.getElementById('hintL'), hintR = document.getElementById('hintR');
   for (const el of [hintL, hintR]) el.addEventListener('click', () => go(+el.dataset.at));   // 누르면 그 방으로 바로 가요
+  const navL = document.getElementById('navL'), navR = document.getElementById('navR');
+  navL.addEventListener('click', () => go(view - 1));     // 화살표: 한 칸 옆방으로 (맨 끝 방에서는 숨겨요)
+  navR.addEventListener('click', () => go(view + 1));
   let barMode = 'lobby';
   /* 게임 시계: 상점·도감·리뷰·설정 같은 창이 열려 있는 동안에는 멈춰요 */
   let pausedMs = 0, lastReal = performance.now();
@@ -1722,6 +1747,7 @@
     now = clock();
     update(now);
     tutTick();
+    navL.hidden = view <= -REST_AT; navR.hidden = view >= REST_AT;
     cam += (view - cam) * .16; if (Math.abs(view - cam) < .001) cam = view;
     const key = viewY ? null : ROOM_AT[view], open = !!key && !ROOMS[key].ui.classList.contains('is-locked');
     const mode = open ? key : view === 0 && !viewY ? 'lobby' : 'away';
