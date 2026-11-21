@@ -235,8 +235,12 @@
   .rankrow .no{font-weight:700; text-align:center; font-variant-numeric:tabular-nums}
   .rankrow .top{font-size:5.4cqw}
   .rankrow .who{min-width:0}
-  .rankrow .who b{display:block; overflow-wrap:anywhere}
+  .rankrow .who .nm{display:flex; align-items:center; gap:1.5cqw}
+  .rankrow .who b{flex:1; min-width:0; overflow-wrap:anywhere}
   .rankrow .who b small{font-size:3.2cqw; font-weight:400; opacity:.75; margin-left:1cqw}
+  .rankrow .st{font-size:3cqw; opacity:.6; white-space:nowrap}
+  .rankrow .st::before{content:''; display:inline-block; width:2.2cqw; height:2.2cqw; margin-right:.8cqw; border-radius:50%; background:#b9b2a6; border:.35cqw solid var(--ink); vertical-align:-.2cqw}
+  .rankrow .st.on{opacity:1} .rankrow .st.on::before{background:#3ecb5a}
   .rankrow .n{display:block; font-size:3.3cqw; font-variant-numeric:tabular-nums}
   .review{border:.45cqw solid var(--ink); border-radius:2.6cqw; padding:1.6cqw 2cqw; background:#fffdf0; display:grid; grid-template-columns:11cqw 1fr; gap:2cqw; align-items:center}
   .review img{width:11cqw; height:11cqw; object-fit:contain}
@@ -822,15 +826,22 @@
   // Firebase Realtime Database 주소를 넣으면 켜져요 (끝에 / 없이). 만드는 법은 RANKING.md
   const RANK_URL = 'https://ddoonsen-default-rtdb.firebaseio.com';
   const RANK_TOP = 50, RANK_EVERY = 60000;       // 보여 줄 등수, 내 기록을 올리는 간격(ms)
-  const rank = { rows:null, state:'', sentServed:-1, sentNick:'', sentAt:-RANK_EVERY };
+  const RANK_ONLINE = 150000;                    // 마지막 소식이 이보다 오래되면 오프라인으로 봐요 (ms)
+  const rank = { rows:null, state:'', sentServed:-1, sentNick:'', sentAt:-RANK_EVERY, skew:0, now:0 };   // skew: 서버 시계 - 내 시계
   const rankNick = () => Array.from(save.nick).slice(0, 12).join('');
-  function rankSend(now) {                        // 내 기록 올리기 (바뀐 게 있을 때만)
+  const rankChanged = () => served !== rank.sentServed || rankNick() !== rank.sentNick;
+  // 내 기록 올리기. 바뀐 게 없어도 게임을 켜 둔 동안은 1분마다 다시 올려서 "접속 중"임을 알려요
+  function rankSend(now) {
     const n = rankNick(), s = served;
-    if (!RANK_URL || !n || s < 1 || (s === rank.sentServed && n === rank.sentNick)) return Promise.resolve();
-    if (!now && performance.now() - rank.sentAt < RANK_EVERY) return Promise.resolve();
+    if (!RANK_URL || !n || s < 1) return Promise.resolve();
+    if (!now && (document.hidden || performance.now() - rank.sentAt < RANK_EVERY - 5000)) return Promise.resolve();
     rank.sentAt = performance.now();
     return fetch(`${RANK_URL}/rank/${save.uid}.json`, { method:'PUT', keepalive:true, headers:{ 'Content-Type':'application/json' }, body:JSON.stringify({ nick:n, served:s, at:{ '.sv':'timestamp' } }) })
-      .then(r => { if (r.ok) { rank.sentServed = s; rank.sentNick = n; } }).catch(() => {});
+      .then(r => r.ok ? r.json() : null).then(v => {
+        if (!v) return;
+        rank.sentServed = s; rank.sentNick = n;
+        if (typeof v.at === 'number') rank.skew = v.at - Date.now();
+      }).catch(() => {});
   }
   function rankLoad() {                           // 내 기록을 올린 다음 순위표를 받아 와요
     if (!RANK_URL || rank.state === 'loading') return;
@@ -839,13 +850,13 @@
       .then(r => r.ok ? r.json() : Promise.reject()).then(data => {
         rank.rows = Object.entries(data || {}).filter(([, v]) => v && typeof v.nick === 'string' && v.served > 0)
           .map(([id, v]) => ({ id, nick:v.nick.slice(0, 20), served:Math.floor(v.served), at:+v.at || 0 }))
-          .sort((a, b) => b.served - a.served || a.at - b.at);
-        rank.state = 'ok';
+          .sort((a, b) => b.served - a.served || (a.id < b.id ? -1 : 1));
+        rank.now = Date.now() + rank.skew; rank.state = 'ok';
       }).catch(() => { rank.state = 'fail'; }).then(() => { if (sheetKind === 'rank') { renderSheet(); } });
   }
   if (RANK_URL) {
     setInterval(() => rankSend(false), RANK_EVERY);
-    document.addEventListener('visibilitychange', () => { if (document.hidden) rankSend(true); });   // 나갈 때 한 번 더
+    document.addEventListener('visibilitychange', () => { if (!document.hidden) rankSend(false); else if (rankChanged()) rankSend(true); });   // 나갈 때 한 번 더, 돌아오면 다시 알려요
   }
   const banner = document.getElementById('banner'); let bannerTimer = 0;
   function announce(text) {
@@ -1058,7 +1069,7 @@
       document.getElementById('sheetTitle').textContent = '랭킹';
       sheetTabs.innerHTML = '';
       const medal = ['🥇', '🥈', '🥉'];
-      const line = (no, r, me) => `<div class="rankrow${me ? ' me' : ''}"><span class="no${no >= 1 && no <= 3 ? ' top' : ''}">${no >= 1 && no <= 3 ? medal[no - 1] : no || '–'}</span><span class="who"><b>${esc(r.nick)}${me ? '<small>나</small>' : ''}</b><span class="n">Lv.${levelOf(r.served)} · 손님 ${r.served.toLocaleString('ko-KR')}명</span></span></div>`;
+      const line = (no, r, me) => `<div class="rankrow${me ? ' me' : ''}"><span class="no${no >= 1 && no <= 3 ? ' top' : ''}">${no >= 1 && no <= 3 ? medal[no - 1] : no || '–'}</span><span class="who"><span class="nm"><b>${esc(r.nick)}${me ? '<small>나</small>' : ''}</b>${RANK_URL ? (me || rank.now - r.at < RANK_ONLINE ? '<span class="st on">접속 중</span>' : '<span class="st">오프라인</span>') : ''}</span><span class="n">Lv.${levelOf(r.served)} · 손님 ${r.served.toLocaleString('ko-KR')}명</span></span></div>`;
       const mine = { id:save.uid, nick:rankNick(), served };
       const rows = rank.rows || [], at = rows.findIndex(r => r.id === save.uid);
       const list = rows.map((r, i) => line(i + 1, i === at ? mine : r, i === at)).join('');
