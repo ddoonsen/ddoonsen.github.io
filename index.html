@@ -1,0 +1,1812 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>또덕이 온천</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Gaegu:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --wall:#fdf7c5; --ink:#1c1000; --line:#ff9b1c;
+    --desk:#fecb86; --wood:#7b6253; --red:#ff3d28;
+    --boy:#6a5cff; --girl:#ff4f8b;
+  }
+  @font-face{
+    font-family:"Sehyun"; src:url(fonts/UhBeeSe_hyunBold.ttf) format("truetype");
+    font-weight:400 700; font-display:swap;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{height:100%;margin:0}
+  body{
+    background:var(--wood); color:var(--ink);
+    font-family:"Sehyun","UhBee Se_hyun","Gaegu","Apple SD Gothic Neo","Malgun Gothic",sans-serif;
+    display:flex; align-items:flex-start; justify-content:center;
+    overscroll-behavior:none; touch-action:manipulation; user-select:none; -webkit-user-select:none;
+  }
+  .game{
+    width:min(100vw, calc(100dvh - 229px), 760px);
+    display:flex; flex-direction:column;
+  }
+  .scene{
+    position:relative; width:100%; aspect-ratio:1/1;
+    background:var(--wall); overflow:hidden;
+    container-type:inline-size;
+  }
+  canvas{position:absolute; inset:0; width:100%; height:100%; display:block}
+
+  .door{
+    position:absolute; top:4.5%; height:25.5%; width:16%;
+    background:transparent; border:0; padding:0; cursor:pointer; border-radius:1.5cqw;
+  }
+  .door.left{left:2.6%} .door.right{left:74.6%}
+  .door:focus-visible{outline:.7cqw solid var(--ink); outline-offset:.4cqw}
+  .scene.asking .door{animation:glow 1.1s ease-in-out infinite}
+  @keyframes glow{50%{box-shadow:0 0 0 .9cqw rgba(255,255,255,.75)}}
+
+  .layer{position:absolute; inset:0; pointer-events:none; will-change:transform}
+  .layer > *{pointer-events:auto}
+  .fx{position:absolute; inset:0; z-index:3; pointer-events:none; overflow:hidden}
+  .gain{
+    position:absolute; transform:translate(-50%,-50%); white-space:nowrap;
+    font-size:5.4cqw; font-weight:700; color:var(--ink);
+    text-shadow:.35cqw 0 #fff, -.35cqw 0 #fff, 0 .35cqw #fff, 0 -.35cqw #fff, .25cqw .25cqw #fff, -.25cqw -.25cqw #fff, .25cqw -.25cqw #fff, -.25cqw .25cqw #fff;
+    animation:gain 1.1s ease-out forwards;
+  }
+  @keyframes gain{0%{opacity:0; margin-top:2cqw} 15%{opacity:1} 70%{opacity:1} 100%{opacity:0; margin-top:-4cqw}}
+  .fly{position:absolute; width:8cqw; height:auto; margin:-4cqw 0 0 -4cqw}
+  .wallet.bump{animation:bump .35s ease-out}
+  @keyframes bump{40%{transform:scale(1.22); background:#ffe27a}}
+  .wallet{
+    position:absolute; right:1.5%; top:1.5%; z-index:2; pointer-events:none;
+    background:#fff; border:.55cqw solid var(--ink); border-radius:2.6cqw; padding:.5cqw 2cqw .5cqw 1.4cqw;
+    font-size:4.2cqw; font-weight:700; line-height:1.2; font-variant-numeric:tabular-nums;
+  }
+  .locked{
+    position:absolute; inset:0; display:none; place-content:center; justify-items:center; gap:1.5cqw;
+    background:rgba(28,16,0,.55); color:#fff; font-size:5cqw; font-weight:700; pointer-events:none !important;
+  }
+  .locked svg{width:20cqw; height:20cqw}
+  .layer.is-locked .locked{display:grid}
+  .layer.is-locked .shop, .layer.is-locked .hot{display:none}
+  .hot{position:absolute; background:transparent; border:0; padding:0; cursor:pointer; border-radius:1.5cqw}
+  .hot:focus-visible{outline:.7cqw solid var(--red); outline-offset:.3cqw}
+  .hot:active{background:rgba(255,255,255,.35)}
+  .count{font-size:4.4cqw; font-weight:700; padding:0 1.5cqw; font-variant-numeric:tabular-nums}
+  .item .pic.unknown{filter:brightness(0); opacity:.28}
+  .stars{font-size:4.2cqw; font-weight:700; padding:0 1cqw; white-space:nowrap; color:var(--line); text-shadow:0 0 .3cqw var(--ink)}
+  .stars small{display:block; font-size:3cqw; color:var(--ink); text-shadow:none; text-align:center}
+  .empty{font-size:3.8cqw; text-align:center; padding:6cqw 2cqw; opacity:.75}
+  .ohint{position:absolute; top:40%; z-index:3; width:17cqw; padding:1.6cqw 1.6cqw 1.4cqw; background:#fff; border:.6cqw solid var(--ink); cursor:pointer; display:grid; gap:.8cqw; justify-items:center; animation:hintBob .9s ease-in-out infinite alternate}
+  .ohint[hidden]{display:none}
+  .ohint.left{left:1.5cqw; border-radius:5cqw 5cqw 5cqw 1cqw} .ohint.right{right:1.5cqw; border-radius:5cqw 5cqw 1cqw 5cqw}
+  .ohint img{width:11cqw; height:9cqw; object-fit:contain}
+  .ohint span{width:100%; height:1.8cqw; border:.4cqw solid var(--ink); border-radius:1cqw; background:#fff; overflow:hidden; display:block}
+  .ohint i{display:block; height:100%; background:#5fce5a}
+  .ohint::after{content:''; position:absolute; top:50%; width:0; height:0; border:2.2cqw solid transparent; margin-top:-2.2cqw}
+  .ohint.left::after{left:-4.6cqw; border-right-color:var(--ink)} .ohint.right::after{right:-4.6cqw; border-left-color:var(--ink)}
+  @keyframes hintBob{from{transform:translateY(-1cqw)} to{transform:translateY(1cqw)}}
+  .banner{
+    position:absolute; left:0; right:0; top:16%; margin:auto; width:max-content; max-width:88%; z-index:4;
+    background:#ffe27a; border:.6cqw solid var(--ink); border-radius:3cqw; padding:1.2cqw 3cqw;
+    font-size:4.2cqw; font-weight:700; text-align:center; line-height:1.3; pointer-events:none;
+    opacity:0; transform:translateY(-2cqw) scale(.9); transition:opacity .25s, transform .25s;
+  }
+  .banner.show{opacity:1; transform:none}
+  .scene{touch-action:none}
+  #hudPop{font:inherit; color:inherit; background:none; border:0; padding:0 0 0 12px; cursor:pointer}
+  #hudPop b{color:#ff9d00; font-weight:700; letter-spacing:1px} #hudPop i{font-style:normal; opacity:.28; letter-spacing:1px}
+  .hud{
+    background:var(--desk); border-top:4px solid var(--ink); padding:8px 14px 0;
+    font-size:19px; font-weight:700; line-height:1.2; font-variant-numeric:tabular-nums;
+    display:flex; justify-content:space-between; align-items:center;
+  }
+  .bubble{
+    position:absolute; left:.5%; bottom:57%; width:40%; aspect-ratio:760/547;
+    background:url(img/bubble.png) center/100% 100% no-repeat;
+    display:flex; align-items:center; justify-content:center;
+    padding:4.6cqw 10cqw 5.4cqw 5cqw;
+    font-size:3.6cqw; font-weight:700; line-height:1.3;
+    text-align:center; text-wrap:balance; word-break:keep-all;
+    pointer-events:none !important;
+    transform-origin:98% 88%; transform:scale(0); opacity:0;
+    transition:transform .22s cubic-bezier(.3,1.5,.5,1), opacity .15s;
+  }
+  .bubble.show{transform:scale(1); opacity:1}
+
+  .shop{
+    position:absolute; right:1.5%; top:19.5%; width:10.5cqw; height:10.5cqw; padding:0;
+    background:#fff; border:.55cqw solid var(--ink); border-radius:2.6cqw; cursor:pointer;
+    box-shadow:0 .7cqw 0 var(--ink); display:grid; place-items:center;
+  }
+  .shop svg{width:82%; height:82%; display:block}
+  .shop:active{transform:translateY(.5cqw); box-shadow:0 .2cqw 0 var(--ink)}
+  .shop:focus-visible{outline:.7cqw solid var(--red); outline-offset:.3cqw}
+  .level{
+    position:absolute; left:1.5%; top:1.5%; z-index:2; pointer-events:none;
+    background:#fff; border:.55cqw solid var(--ink); border-radius:2.6cqw; padding:.5cqw 2cqw .9cqw;
+    font-size:4.2cqw; font-weight:700; line-height:1.2; text-align:center; min-width:17cqw;
+  }
+  .level .bar{display:block; height:1.3cqw; margin-top:.3cqw; border-radius:1cqw; background:#eadfb0; overflow:hidden}
+  .level .fill{display:block; height:100%; width:0; background:var(--line); transition:width .3s}
+  .level.up{animation:levelup .9s ease-out}
+  @keyframes levelup{0%{transform:scale(1)} 30%{transform:scale(1.35) rotate(-4deg); background:#ffe27a} 100%{transform:scale(1)}}
+  @media (prefers-reduced-motion:reduce){ .level.up{animation:none} }
+  .coin{height:1.4em; width:auto; vertical-align:-.34em; margin-right:.15em}
+  .sheet-wrap{
+    position:absolute; inset:0; z-index:5; display:none; align-items:center; justify-content:center;
+    background:rgba(28,16,0,.45);
+  }
+  .sheet-wrap.open{display:flex}
+  .sheet{
+    width:92%; max-height:94%; display:flex; flex-direction:column; overflow:hidden;
+    background:var(--wall); border:.6cqw solid var(--ink); border-radius:4cqw;
+  }
+  .sheet-head{
+    display:flex; align-items:center; gap:2cqw; padding:1.6cqw 2.2cqw;
+    background:var(--desk); border-bottom:.6cqw solid var(--ink); font-size:4.8cqw; font-weight:700;
+  }
+  .sheet-head .money{
+    margin-left:auto; background:#fff; border:.45cqw solid var(--ink); border-radius:2.4cqw;
+    padding:.2cqw 1.8cqw; font-size:3.7cqw; font-variant-numeric:tabular-nums;
+  }
+  .x{
+    font:inherit; font-size:5cqw; font-weight:700; line-height:1; color:var(--ink);
+    width:9.5cqw; height:9.5cqw; border:.45cqw solid var(--ink); border-radius:2.4cqw; background:#fff; cursor:pointer;
+  }
+  .tabs{display:flex; gap:1.4cqw; padding:1.8cqw 2.2cqw 0}
+  .tabs:empty{display:none}
+  .tab{
+    flex:1; font:inherit; font-size:3.9cqw; font-weight:700; color:var(--ink); padding:1.4cqw; cursor:pointer;
+    border:.45cqw solid var(--ink); border-bottom:0; border-radius:2.6cqw 2.6cqw 0 0; background:var(--desk);
+  }
+  .tab[aria-selected="true"]{background:#fff}
+  .list{
+    background:#fff; border-top:.45cqw solid var(--ink); padding:1.8cqw 2.2cqw 2.4cqw;
+    display:grid; gap:1.5cqw; overflow-y:auto; overscroll-behavior:contain; touch-action:pan-y;
+  }
+  .sub{font-size:3.7cqw; font-weight:700; margin:.4cqw 0 -.3cqw}
+  .item{
+    display:grid; grid-template-columns:13cqw 1fr auto; gap:2cqw; align-items:center;
+    border:.45cqw solid var(--ink); border-radius:2.6cqw; padding:1.2cqw 1.6cqw; background:#fffdf0;
+  }
+  .item .pic{width:13cqw; height:10.6cqw; border-radius:1.6cqw; border:.35cqw solid var(--ink); object-fit:cover; background:#fff}
+  .item .pic.fit{object-fit:contain; padding:.6cqw}
+  .item .pic.swatch{background:#ecd0aa}
+  .item .name{font-size:4.1cqw; font-weight:700; line-height:1.3}
+  .item .desc{font-size:3.05cqw; opacity:.75; line-height:1.3}
+  .act{
+    font:inherit; font-size:3.5cqw; font-weight:700; color:var(--ink); white-space:nowrap; cursor:pointer;
+    min-width:19cqw; min-height:10cqw; padding:1cqw 1.6cqw;
+    border:.45cqw solid var(--ink); border-radius:2.2cqw; background:var(--line); box-shadow:0 .6cqw 0 var(--ink);
+  }
+  .act:active:not(:disabled){transform:translateY(.4cqw); box-shadow:0 .2cqw 0 var(--ink)}
+  .act.on{background:#d8f0c8}
+  .act:disabled{background:#eee; opacity:.6; box-shadow:none; cursor:default}
+  .act.on:disabled{background:#d8f0c8; opacity:1}
+  .x:focus-visible,.tab:focus-visible,.act:focus-visible{outline:.7cqw solid var(--red); outline-offset:.2cqw}
+
+  .loading{
+    position:absolute; inset:0; display:grid; place-items:center;
+    background:var(--wall); font-size:7cqw; font-weight:700;
+  }
+  .loading[hidden]{display:none}
+
+  .controls{padding:8px 12px 14px; background:var(--desk); height:101px}
+  .guide{display:grid; grid-template-columns:1fr 1fr; gap:10px}
+  .guide button{
+    font:inherit; font-size:22px; font-weight:700; color:var(--ink);
+    min-height:74px; border:4px solid var(--ink); border-radius:20px;
+    background:#fff; cursor:pointer;
+    box-shadow:0 5px 0 var(--ink); transition:transform .06s, box-shadow .06s, opacity .15s;
+  }
+  .guide button:active:not(:disabled), .bag button:active{transform:translateY(4px); box-shadow:0 1px 0 var(--ink)}
+  .guide button:disabled{opacity:.4; cursor:default}
+  .guide button:focus-visible, .bag button:focus-visible{outline:4px solid var(--red); outline-offset:2px}
+  .controls.away .guide, .controls.onsen .guide{display:none}   /* 카운터가 아닐 때는 안내 버튼을 숨겨요 */
+  /* 온천방에서는 그 자리에 가진 음식이 나와요 */
+  .bag{display:none; gap:8px; height:84px; padding:10px 4px 0; overflow-x:auto; overscroll-behavior:contain; align-items:flex-start}
+  .controls.onsen .bag{display:flex}
+  .bag button{
+    position:relative; flex:0 0 62px; height:62px; padding:4px; cursor:pointer;
+    background:#fff; border:4px solid var(--ink); border-radius:18px; box-shadow:0 5px 0 var(--ink);
+  }
+  .bag img{width:100%; height:100%; object-fit:contain; display:block; pointer-events:none}
+  .bag .n{
+    position:absolute; right:-7px; top:-8px; min-width:26px; height:26px; padding:0 5px; border-radius:13px;
+    background:var(--red); color:#fff; border:3px solid var(--ink); font:inherit; font-size:15px; font-weight:700; line-height:20px; text-align:center;
+  }
+  .bag .hint{align-self:center; font-size:18px; font-weight:700; line-height:1.3; padding:0 6px}
+  /* 버튼 칸 아래 남는 자리: 상점 */
+  .dock{display:flex; justify-content:center; gap:14px; padding:10px 12px 12px; background:var(--wood)}
+  .dockbtn{
+    width:64px; height:64px; padding:6px; cursor:pointer; display:grid; place-items:center;
+    background:#fff; border:4px solid var(--ink); border-radius:18px; box-shadow:0 5px 0 var(--ink);
+  }
+  .dockbtn svg{width:100%; height:100%; display:block}
+  .dockbtn{position:relative} .dock{gap:10px}
+  .dockbtn .dot{position:absolute; top:-7px; right:-7px; width:18px; height:18px; border-radius:50%; background:var(--red, #ff3d28); border:3px solid var(--ink)}
+  .dockbtn .dot[hidden]{display:none}
+  .review{border:.45cqw solid var(--ink); border-radius:2.6cqw; padding:1.6cqw 2cqw; background:#fffdf0; display:grid; grid-template-columns:11cqw 1fr; gap:2cqw; align-items:center}
+  .review img{width:11cqw; height:11cqw; object-fit:contain}
+  .stars{font-size:4.2cqw; color:#ff9d00; letter-spacing:.3cqw} .stars i{font-style:normal; color:#1c1000; opacity:.2}
+  .review .txt{font-size:3.5cqw; line-height:1.35}
+  .avg{font-size:4.2cqw; font-weight:700; text-align:center; padding:1cqw 0}
+  .dockbtn:active{transform:translateY(4px); box-shadow:0 1px 0 var(--ink)}
+  .dockbtn:focus-visible{outline:4px solid var(--red); outline-offset:2px}
+  /* 설정: 소리 크기 */
+  .setrow{
+    display:grid; grid-template-columns:23cqw 1fr 9cqw; gap:2cqw; align-items:center;
+    border:.45cqw solid var(--ink); border-radius:2.6cqw; padding:2cqw 2.4cqw; background:#fffdf0;
+    font-size:4.1cqw; font-weight:700;
+  }
+  .setrow input{width:100%; height:9cqw; margin:0; accent-color:var(--line); cursor:pointer}
+  .setrow output{text-align:right; font-variant-numeric:tabular-nums}
+  .act.wide{width:100%}
+  /* 처음 하는 사람용 안내: 봐야 할 곳만 밝게, 나머지는 반투명 회색 */
+  .nick{position:fixed; inset:0; z-index:60; background:rgba(40,28,12,.62); display:grid; place-items:center; padding:20px}
+  .nick[hidden]{display:none}
+  .nick-box{width:min(340px, 100%); background:#fff6dc; border:4px solid var(--ink); border-radius:22px; padding:20px 18px 18px; display:grid; gap:10px; text-align:center; box-shadow:0 6px 0 var(--ink)}
+  .nick-box h2{margin:0; font-size:24px} .nick-box p{margin:0; font-size:16px}
+  .nick-box input{font:inherit; font-size:22px; font-weight:700; text-align:center; padding:10px; border:3px solid var(--ink); border-radius:14px; background:#fff; color:var(--ink); width:100%; box-sizing:border-box}
+  .nick-box input:focus-visible{outline:4px solid var(--red, #ff3d28); outline-offset:2px}
+  .nick-box button{font:inherit; font-size:22px; font-weight:700; padding:10px; border:3px solid var(--ink); border-radius:14px; background:#ffd23e; color:var(--ink); box-shadow:0 4px 0 var(--ink); cursor:pointer}
+  .nick-box button:active{transform:translateY(4px); box-shadow:none}
+  .nick-err{color:#d42a17; min-height:1.2em}
+  .tut{position:fixed; inset:0; z-index:50; pointer-events:none}
+  .tut[hidden]{display:none}
+  .tut-hole{
+    position:fixed; border-radius:18px; outline:4px solid #fff;
+    box-shadow:0 0 0 200vmax rgba(70,70,70,.62);
+    transition:left .25s, top .25s, width .25s, height .25s;
+  }
+  .tut-box{
+    position:fixed; left:50%; transform:translateX(-50%); width:min(92vw, 420px);
+    background:#fff; border:4px solid var(--ink); border-radius:18px; padding:12px 14px 10px;
+    font-size:19px; font-weight:700; line-height:1.35; text-align:center; pointer-events:auto;
+    box-shadow:0 5px 0 var(--ink); transition:top .25s;
+  }
+  .tut-box p{margin:0 0 8px; white-space:pre-line}
+  .tut-row{display:flex; gap:8px; justify-content:center}
+  .tut-row button{
+    font:inherit; font-size:16px; font-weight:700; color:var(--ink); cursor:pointer;
+    min-height:40px; padding:0 16px; border:3px solid var(--ink); border-radius:12px; background:#eee;
+  }
+  .tut-row #tutOk{background:var(--line)}
+  .tut-row button[hidden]{display:none}
+  .tut-row button:focus-visible{outline:3px solid var(--red); outline-offset:2px}
+  .tut-hand{
+    position:fixed; width:64px; height:64px; margin:-32px 0 0 -32px; border-radius:50%;
+    background:#fff; border:4px solid var(--ink); display:grid; place-items:center;
+    animation:tuthand 1.3s ease-in-out infinite;
+  }
+  .tut-hand[hidden]{display:none}
+  .tut-hand svg{width:38px; height:38px; transform:rotate(var(--rot, 0deg))}
+  @keyframes tuthand{0%{transform:translate(calc(var(--dx) * -1), calc(var(--dy) * -1)); opacity:0} 20%{opacity:1} 80%{opacity:1} 100%{transform:translate(var(--dx), var(--dy)); opacity:0}}
+  @media (prefers-reduced-motion:reduce){ .tut-hand{animation:none} .tut-hole,.tut-box{transition:none} }
+  .controls .arrow{display:inline-block; font-size:25px; transform:translateY(1px)}
+</style>
+</head>
+<body>
+<main class="game">
+  <div class="scene" id="scene">
+    <canvas id="cv" width="900" height="900" aria-label="온천 카운터. 손님 또덕이가 문에서 카운터로 걸어옵니다."></canvas>
+    <div class="layer" id="lobbyUi">
+      <button class="door left" id="doorL" aria-label="왼쪽 문으로 안내"></button>
+      <button class="door right" id="doorR" aria-label="오른쪽 문으로 안내"></button>
+      <div class="bubble" id="bubble" role="status" aria-live="polite"></div>
+    </div>
+    <div class="layer" id="menUi">
+      <button class="shop" id="setM" aria-label="남자 온천 설정">
+        <svg viewBox="0 0 48 48" fill="none" stroke="#ff3d28" stroke-width="3.4" stroke-linecap="round" aria-hidden="true">
+          <path d="M8 27c0 8 7 13 16 13s16-5 16-13"/>
+          <path d="M16 8c-3 5 3 8 0 14M24 6c-3 5 3 9 0 16M32 8c-3 5 3 8 0 14"/>
+        </svg>
+      </button>
+    </div>
+    <div class="layer" id="womenUi">
+      <button class="shop" id="setF" aria-label="여자 온천 설정">
+        <svg viewBox="0 0 48 48" fill="none" stroke="#ff3d28" stroke-width="3.4" stroke-linecap="round" aria-hidden="true">
+          <path d="M8 27c0 8 7 13 16 13s16-5 16-13"/>
+          <path d="M16 8c-3 5 3 8 0 14M24 6c-3 5 3 9 0 16M32 8c-3 5 3 8 0 14"/>
+        </svg>
+      </button>
+    </div>
+    <div class="layer" id="men2Ui">
+      <div class="locked"><svg viewBox="0 0 48 48" fill="none" stroke="#fff" stroke-width="3.6" stroke-linejoin="round" stroke-linecap="round" aria-hidden="true"><path d="M15 21v-6a9 9 0 0 1 18 0v6"/><rect x="9" y="21" width="30" height="21" rx="4" fill="#fff"/><path d="M24 29v6" stroke="#1c1000"/></svg><span>Lv.30에 열려요</span></div>
+      <button class="shop" id="setM2" aria-label="남자 온천 2 설정">
+        <svg viewBox="0 0 48 48" fill="none" stroke="#ff3d28" stroke-width="3.4" stroke-linecap="round" aria-hidden="true">
+          <path d="M8 27c0 8 7 13 16 13s16-5 16-13"/>
+          <path d="M16 8c-3 5 3 8 0 14M24 6c-3 5 3 9 0 16M32 8c-3 5 3 8 0 14"/>
+        </svg>
+      </button>
+    </div>
+    <div class="layer" id="women2Ui">
+      <div class="locked"><svg viewBox="0 0 48 48" fill="none" stroke="#fff" stroke-width="3.6" stroke-linejoin="round" stroke-linecap="round" aria-hidden="true"><path d="M15 21v-6a9 9 0 0 1 18 0v6"/><rect x="9" y="21" width="30" height="21" rx="4" fill="#fff"/><path d="M24 29v6" stroke="#1c1000"/></svg><span>Lv.30에 열려요</span></div>
+      <button class="shop" id="setF2" aria-label="여자 온천 2 설정">
+        <svg viewBox="0 0 48 48" fill="none" stroke="#ff3d28" stroke-width="3.4" stroke-linecap="round" aria-hidden="true">
+          <path d="M8 27c0 8 7 13 16 13s16-5 16-13"/>
+          <path d="M16 8c-3 5 3 8 0 14M24 6c-3 5 3 9 0 16M32 8c-3 5 3 8 0 14"/>
+        </svg>
+      </button>
+    </div>
+    <div class="layer" id="restUi">
+      <button class="hot" id="fridgeA" style="left:38%;top:37.5%;width:20.5%;height:22%" aria-label="미니 냉장고 열기"></button>
+      <button class="hot" id="trashBtn" style="left:5%;top:27%;width:20%;height:33%" aria-label="쓰레기통 비우기"></button>
+    </div>
+    <button class="ohint left" id="hintL" hidden aria-label="왼쪽 방에서 음식 주문"><img alt=""><span><i></i></span></button>
+    <button class="ohint right" id="hintR" hidden aria-label="오른쪽 방에서 음식 주문"><img alt=""><span><i></i></span></button>
+    <div class="banner" id="banner" role="status"></div>
+    <div class="fx" id="fx" aria-hidden="true"></div>
+    <div class="wallet" id="wallet" role="status"></div>
+    <div class="level" id="level" role="status"><span id="levelText">Lv.1</span><span class="bar"><span class="fill" id="levelFill"></span></span></div>
+    <div class="sheet-wrap" id="sheetWrap">
+      <div class="sheet" role="dialog" aria-labelledby="sheetTitle">
+        <div class="sheet-head"><span id="sheetTitle"></span><span class="money" id="sheetMoney"></span><button class="x" id="sheetClose" aria-label="닫기">✕</button></div>
+        <div class="tabs" id="sheetTabs" role="tablist"></div>
+        <div class="list" id="sheetList"></div>
+      </div>
+    </div>
+    <div class="loading" id="loading">문 여는 중…</div>
+  </div>
+  <div class="hud"><span id="hudGuests">손님 0명</span><button id="hudPop" type="button" aria-label="인기">인기 ★</button></div>
+  <div class="controls" id="controls">
+    <div class="guide">
+      <button id="btnL" disabled><span class="arrow">←</span> 왼쪽</button>
+      <button id="btnR" disabled>오른쪽 <span class="arrow">→</span></button>
+    </div>
+    <div class="bag" id="bag" aria-label="가진 음식"></div>
+  </div>
+  <div class="dock">
+    <button class="dockbtn" id="shop" aria-label="상점">
+      <svg viewBox="0 0 48 48" fill="none" stroke="#1c1000" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round" aria-hidden="true">
+        <path d="M8 22v19h32V22" fill="#fdf7c5"/>
+        <path d="M5 9h38l3 10c0 3-2 5-5 5s-5-2-5-5c0 3-2.500 5-6 5s-6-2-6-5c0 3-2.500 5-6 5s-6-2-6-5c0 3-2 5-5 5s-5-2-5-5z" fill="#ff3d28"/>
+        <path d="M18 9l-1 10M30 9l1 10" stroke-width="2"/>
+        <path d="M13 41V30h9v11" fill="#7b6253"/>
+        <rect x="27" y="29" width="9" height="7" rx="1" fill="#9fd8ff"/>
+      </svg>
+    </button>
+    <button class="dockbtn" id="book" aria-label="단골 도감">
+      <svg viewBox="0 0 48 48" fill="none" stroke="#1c1000" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round" aria-hidden="true">
+        <path d="M24 12c-5-4-11-4-17-2v27c6-2 12-2 17 2 5-4 11-4 17-2V10c-6-2-12-2-17 2z" fill="#fdf7c5"/>
+        <path d="M24 12v27"/>
+        <path d="M12 18c3-1 5-1 8 0M12 24c3-1 5-1 8 0M28 18c3-1 5-1 8 0" stroke-width="2"/>
+        <path d="M32 24l1.300 2.700 3 .4-2.200 2.100.5 3-2.600-1.400-2.600 1.400.5-3-2.200-2.100 3-.4z" fill="#ffd93b" stroke-width="1.400"/>
+      </svg>
+    </button>
+    <button class="dockbtn" id="review" aria-label="리뷰">
+      <svg viewBox="0 0 48 48" fill="none" stroke="#1c1000" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round" aria-hidden="true">
+        <path d="M8 9h32a3 3 0 0 1 3 3v19a3 3 0 0 1-3 3H24l-9 8v-8H8a3 3 0 0 1-3-3V12a3 3 0 0 1 3-3z" fill="#fff6dc"/>
+        <path d="M24 13.500l2.500 5.200 5.700.700-4.200 4 1.100 5.600-5.100-2.800-5.100 2.800 1.100-5.600-4.200-4 5.700-.700z" fill="#ffd93b" stroke-width="2"/>
+      </svg>
+      <span class="dot" id="reviewDot" hidden></span>
+    </button>
+    <button class="dockbtn" id="gear" aria-label="설정">
+      <svg viewBox="0 0 48 48" fill="none" stroke="#1c1000" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round" aria-hidden="true">
+        <path d="M35.0 24.0L41.5 24.0M31.8 31.8L36.4 36.4M24.0 35.0L24.0 41.5M16.2 31.8L11.6 36.4M13.0 24.0L6.5 24.0M16.2 16.2L11.6 11.6M24.0 13.0L24.0 6.5M31.8 16.2L36.4 11.6" stroke-width="7.5"/>
+        <path d="M35.0 24.0L41.5 24.0M31.8 31.8L36.4 36.4M24.0 35.0L24.0 41.5M16.2 31.8L11.6 36.4M13.0 24.0L6.5 24.0M16.2 16.2L11.6 11.6M24.0 13.0L24.0 6.5M31.8 16.2L36.4 11.6" stroke="#c3ced6" stroke-width="3.6"/>
+        <circle cx="24" cy="24" r="12" fill="#c3ced6"/>
+        <circle cx="24" cy="24" r="4.800" fill="#fff"/>
+      </svg>
+    </button>
+  </div>
+</main>
+<div class="nick" id="nick" hidden>
+  <form class="nick-box" id="nickForm" role="dialog" aria-labelledby="nickTitle">
+    <h2 id="nickTitle">닉네임을 정해 주세요</h2>
+    <p>온천 사장님 이름이에요.</p>
+    <input id="nickInput" type="text" autocomplete="off" enterkeyhint="done" placeholder="예: 또덕사장">
+    <p class="nick-err" id="nickErr" aria-live="polite"></p>
+    <button type="submit" id="nickOk">시작하기</button>
+  </form>
+</div>
+<div class="tut" id="tut" hidden>
+  <div class="tut-hole" id="tutHole"></div>
+  <div class="tut-hand" id="tutHand" hidden aria-hidden="true">
+    <svg viewBox="0 0 48 48" fill="none" stroke="#1c1000" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"><path d="M40 24H10M22 11L9 24l13 13"/></svg>
+  </div>
+  <div class="tut-box" id="tutBox" role="dialog" aria-live="polite">
+    <p id="tutText"></p>
+    <div class="tut-row"><button id="tutSkip">건너뛰기</button><button id="tutOk">알겠어요</button></div>
+  </div>
+</div>
+
+<script>
+(() => {
+  const cv = document.getElementById('cv'), ctx = cv.getContext('2d');
+  const scene = document.getElementById('scene');
+  const bubble = document.getElementById('bubble');
+  const btnL = document.getElementById('btnL'), btnR = document.getElementById('btnR');
+  // 그림판 크기: 화면에 맞춰 필요한 만큼만 (작을수록 가벼워요)
+  // (화면 크기가 바뀌면 다시 재요. 처음에 작은 창으로 열렸다가 커져도 흐려지지 않게)
+  const sizeFor = () => Math.max(720, Math.min(1400, Math.round((scene.clientWidth || 450) * Math.min(window.devicePixelRatio || 1, 3))));
+  let S = sizeFor();
+  cv.width = cv.height = S;
+  const resized = () => { const n = sizeFor(); if (Math.abs(n - S) < 8) return; S = n; cv.width = cv.height = S; ctx.imageSmoothingQuality = 'high'; tubCache.clear(); };
+  if (window.ResizeObserver) new ResizeObserver(resized).observe(scene);
+  window.addEventListener('resize', resized);
+  ctx.imageSmoothingQuality = 'high';
+
+  /* ---------- 그림 불러오기 ---------- */
+  const load = src => new Promise((ok, no) => {
+    const i = new Image(); i.onerror = no; i.src = src;
+    i.onload = () => i.decode ? i.decode().then(() => ok(i), () => ok(i)) : ok(i);   // 미리 풀어 둬서 처음 그릴 때 안 끊기게
+  });
+  const names = n => Array.from({length:n}, (_, i) => i + 1);
+  const assets = {};
+  Promise.all([
+    Promise.all(names(5).map(i => load(`img/bg${i}.jpg`))),
+    Promise.all(names(7).map(i => load(`img/m${i}.png`))),
+    Promise.all(names(7).map(i => load(`img/f${i}.png`))),
+    load('img/front.png'),
+    load('img/onsenbg.jpg'),
+    Promise.all(names(5).map(i => load(`img/tube${i}.png`))),   // 온천탕 (김이 올라와요)
+    load('img/duck2.png'),                                       // 탕에 앉은 남자 또덕이
+    load('img/duck2f.png'),                                      // 탕에 앉은 여자 또덕이
+    load('img/water0.png'),                                      // 물 자리 (물 색을 입힐 때 써요)
+    load('img/rest.jpg'),                                        // 휴게실
+    Promise.all(names(7).map(i => load(`img/mt${i}.png`))),     // 양머리 수건 쓴 또덕이 (걷기)
+    load('img/towelm.png'), load('img/towelf.png'),              // 양머리 수건 쓴 또덕이 (탕 안, 남자 / 여자)
+    load('img/bubble.png'),                                      // 말풍선
+    load('img/towels.png'),                                      // 카운터에 놓인 수건 (남아 있을 때만 보여요)
+    Promise.all(names(7).map(i => load(`img/g${i}.png`))),      // 할머니 또덕이 (걷기)
+    load('img/gtub.png'),                                        // 할머니 또덕이 (탕 안)
+    load('img/stool.png'),                                       // 씻는 자리 의자
+    Promise.all(names(5).map(i => load(`img/wash${i}.png`))),   // 의자에 앉아 머리 감는 또덕이 (의자까지 그려진 그림)
+    Promise.all(['m', 'mt', 'ft', 'g', 'gt'].map(k => load(`img/sit_${k}.png`))),   // 휴게실에 앉은 또덕이: 남자, 양머리 남자, 양머리 여자, 할머니, 양머리 할머니
+  ]).then(([bg, m, f, front, onsenBg, tubEmpty, duck2, duck2f, water, rest, t, towelM, towelF, bubbleImg, towels, g, gtub, stool, wash, sit]) => {
+    Object.assign(assets, {bg, m, f, front, onsenBg, tubEmpty, duck2, duck2f, water, rest, t, towelM, towelF, bubbleImg, towels, g, gtub, stool, wash});
+    assets.sit = { m:sit[0], mt:sit[1], ft:sit[2], g:sit[3], gt:sit[4] };
+    document.getElementById('loading').hidden = true;
+    if (!save.nick) askNick(true);                                // 닉네임부터 정해요
+    else if (!save.tut) startTutorial();                          // 처음 시작한 사람에게만 안내를 보여 줘요
+    nextSpawnAt = clock() + 600;
+    requestAnimationFrame(tick);
+  }).catch(() => { document.getElementById('loading').textContent = '그림을 불러오지 못했어요'; });
+
+  /* ---------- 자리 (화면 비율 0~1, 발 위치 기준) ---------- */
+  const ENTRANCE = {x:.420, y:.310, h:.250};   // 보라색: 입구
+  const COUNTER  = {x:.470, y:.670, h:.410};   // 빨간색: 카운터 앞
+  const BEND     = {x:.440, y:.470};           // 보라색 길이 휘는 곳
+  const DOOR = { left:{x:.106, y:.305, h:.250}, right:{x:.826, y:.305, h:.250} };
+
+  const ASK = [
+    '화장실이 급해요!\n어디예요?',
+    '화장실은\n어느 쪽이에요?',
+    '저… 화장실 좀 쓸게요. 어디죠?',
+    '화장실 어디로 가면 돼요?',
+  ];
+  const ASK_ONSEN = ['온천이 어디예요?', '어른 한 명이요!\n온천이 어디예요?', '온천하러 왔어요.\n어디로 가요?', '온천은 어느 쪽이에요?'];
+  const ASK_ONSEN_BACK = ['온천이 어디예요?', '이제 온천 갈래요!\n온천이 어디예요?', '시원하다~\n온천은 어디예요?'];
+  const RESTROOM_CHANCE = .25;   // 새 손님 중 화장실부터 찾는 비율 (나머지는 바로 온천)
+  // 카운터 양쪽에 놓인 수건 자리 (왼쪽 = 남자, 오른쪽 = 여자). 온천 가는 길에 들르면 양머리 수건을 써요
+  const TOWEL_SPOT = { left:{x:.200, y:.700, h:.400}, right:{x:.775, y:.700, h:.400} };
+  const TOWEL_CHANCE = .5;       // 온천 손님 중 수건을 구경하고 가는 비율 (수건이 남아 있을 때)
+  const SHAMPOO_PACK = 10;       // 상점에서 한 번 사면 들어오는 샴푸 (또덕이 10마리가 쓸 양)
+  const SHAMPOO_PRICE = 500;     // 샴푸로 머리를 감으면 들어오는 또코인
+  const TOWEL_PACK = 10;         // 상점에서 한 번 사면 들어오는 수건 수 = 손님 10명이 가져가면 다 떨어져요
+  let towelsOnHold = 0;          // 가지러 걸어가는 중인 또덕이 몫
+  const TOWEL_LOOK = 1000;       // 수건 앞에서 구경하는 시간
+  const TOWEL_PRICE = 800;       // 수건을 가져가면 들어오는 또코인
+  const SIDE = { left:{x:-.20, y:.560, h:.380}, right:{x:1.20, y:.560, h:.380} };   // 온천: 화면 옆으로
+  const BACK_AFTER = 20000;      // 화장실에 간 뒤 다시 나오기까지 (20초)
+  const THANKS = ['감사합니다!', '고마워요!'], THANKS_WC = ['감사합니다!', '고마워요!', '살았다…!'];   // '살았다'는 화장실 갈 때만
+  const OOPS = ['어… 거긴 아닌 것 같은데요?', '앗, 반대쪽 아닌가요?'];
+  const pick = a => a[Math.floor(Math.random() * a.length)];
+  const PRICE = 4000;            // 온천에 한 번 들어갈 때 받는 입장료
+
+  /* ---------- 상태 ---------- */
+  let served = 0, money = 0, lastSex = null, streak = 0;
+  const inRestroom = [];         // 화장실에 들어가 있는 또덕이들
+  const queue = [];              // 줄 선 또덕이들 (맨 앞 = 카운터 앞)
+  const leavers = [];            // 안내받고 걸어가는 또덕이들
+  let nextSpawnAt = 0;
+  // 줄 자리: 맨 앞은 카운터 앞, 뒤로 갈수록 오른쪽 뒤로 멀어져요
+  const LINE = [
+    COUNTER,
+    {x:.665, y:.590, h:.355},
+    {x:.790, y:.520, h:.310},
+    {x:.885, y:.462, h:.275},
+  ];
+  const STALE_AFTER = 40;        // 손님이 이만큼 다녀가도록 탕·장식을 안 바꾸면 "달라진 게 없다"고 해요
+  const ORDER_WAIT = 30000;      // 음식을 시키고 기다려 주는 시간
+  const REVIEW_CHANCE = .2;      // 리뷰를 남기는 손님 (5명 중 1명쯤)
+  const REVIEW_TEXT = {
+    wrong:  ['시킨 음식이 아닌 걸 주셨어요… 흥!', '계란 시켰는데 딴 게 왔어요. 실망이에요', '주문을 잘 안 들으시는 것 같아요'],
+    late:   ['음식을 시켰는데 끝까지 안 왔어요…', '배고픈데 한참 기다리다 그냥 나왔어요', '주문이 너무 늦어요. 꽥…'],
+    towel:  ['수건이 없어서 양머리를 못 했어요', '수건이 다 떨어졌더라고요. 아쉬워요'],
+    shampoo:['샴푸가 없어서 물로만 감았어요', '씻는 곳에 샴푸가 없어요…'],
+    stale:  ['올 때마다 똑같아요. 새로운 게 있었으면…', '예전이랑 달라진 게 없네요', '좀 심심해요. 탕 좀 바꿔 주세요'],
+    food:   ['탕에서 먹는 간식 최고예요!', '시킨 음식이 바로 나와서 좋았어요. 냠냠!'],
+    water:  ['물이 정말 좋아요! 몸이 사르르~', '탕이 고급스러워요. 또 올게요!'],
+    deco:   ['랜턴이랑 꽥꽥이가 귀여워요!', '분위기가 아늑해서 좋았어요'],
+    ok:     ['따뜻하고 좋았어요', '잘 쉬다 갑니다. 꽥!', '평범하지만 편했어요', '또 올게요~'],
+    granny: ['아이고 시원~하다. 잘 쉬다 간다', '뜨끈하니 좋구나. 또 오마'],
+  };
+  function review(who, key, huff) {      // 탕에서 나갈 때, 5명 중 1명쯤이 리뷰를 남겨요
+    if (!who.late && Math.random() >= REVIEW_CHANCE) return;   // 음식을 못 받고 나간 손님은 꼭 써요
+    const room = save.rooms[key], bad = [], good = [];
+    let st = 4;
+    if (who.late) { st -= 3; bad.push('late'); }
+    else if (huff) { st -= 3; bad.push('wrong'); }
+    if (who.noTowel) { st -= 1; bad.push('towel'); }
+    if (who.noShampoo) { st -= 1; bad.push('shampoo'); }
+    if (save.stale >= STALE_AFTER) { st -= 1; bad.push('stale'); }
+    if (who.fed) { st += 1; good.push('food'); }
+    if ((WATERS[room.water] || WATERS.base).bonus >= 3000) { st += 1; good.push('water'); }
+    else if (room.lantern && room.toy) { st += 1; good.push('deco'); }
+    st = Math.max(1, Math.min(5, st));
+    const why = bad[0] || (good.length ? pick(good) : who.kind === 'granny' ? 'granny' : 'ok');
+    save.reviews.unshift({ s:st, t:pick(REVIEW_TEXT[why]), k: who.kind === 'granny' ? 'g' : key[0] });
+    save.reviews.length = Math.min(save.reviews.length, 30);
+    save.unread++; keep(); showReviewDot(); if (sheetKind === 'review') renderSheet();
+  }
+  const showReviewDot = () => { document.getElementById('reviewDot').hidden = !save.unread; };
+  const GAP_QUIET = [9000, 14000], GAP_BUSY = [1800, 3500];   // 새 손님이 오는 간격(밀리초): 인기 0일 때 ~ 인기 100일 때
+  /* 인기 (0 ~ 100): 온천이 좋을수록 높아지고, 높을수록 손님이 자주 와요 */
+  function popularity() {
+    const open = ROOM_KEYS.filter(k => !ROOMS[k].ui.classList.contains('is-locked'));
+    let water = 0, deco = 0;
+    for (const k of open) { const r = save.rooms[k]; water += (WATERS[r.water] || WATERS.base).bonus / 7000; deco += (r.lantern ? 1 : 0) + (r.toy ? 1 : 0); }
+    let p = 30;
+    p += 22 * water / open.length;                       // 좋은 탕
+    p += 12 * deco / (open.length * 2);                  // 랜턴, 꽥꽥이
+    p += save.towels > 0 ? 7 : -5;                       // 수건: 없으면 깎여요
+    p += save.shampoo > 0 ? 5 : -4;                      // 샴푸: 없으면 깎여요
+    if (save.stale >= STALE_AFTER) p -= 10;              // 한참 동안 달라진 게 없어요
+    const rv = save.reviews.slice(0, 10); if (rv.length) p += (rv.reduce((a, v) => a + v.s, 0) / rv.length - 3.5) * 8;   // 최근 리뷰 별점
+    p += Math.min(10, ownedFoods().length * 2);          // 음식 종류
+    if (open.length > 2) p += 6;                         // 온천방 2
+    if (save.trash >= 4) p -= 12;                        // 휴게실 쓰레기통이 넘치려고 해요
+    p += save.mood;                                      // 손님들 기분: 음식을 잘 주면 오르고, 잘못 주면 내려가요
+    return Math.max(0, Math.min(100, p));
+  }
+  const popStars = () => Math.min(5, 1 + Math.floor(popularity() / 20));
+  function mood(d) { save.mood = Math.max(-20, Math.min(10, save.mood + d)); }
+  let popShown = -1;
+  function showPop() {
+    const n = popStars(); if (n === popShown) return;
+    if (popShown > 0) announce(n > popShown ? `인기가 올랐어요! 별 ${n}개\n손님이 더 자주 와요` : `인기가 떨어졌어요… 별 ${n}개\n손님이 뜸해져요`);
+    popShown = n;
+    document.getElementById('hudPop').innerHTML = `인기 <b>${'★'.repeat(n)}</b><i>${'★'.repeat(5 - n)}</i>`;
+  }
+  document.getElementById('hudPop').addEventListener('click', () => announce('인기가 높으면 손님이 자주 와요!\n수건·샴푸·음식 채우기, 음식 제때 주기,\n가끔 탕·장식 바꾸기, 좋은 리뷰 받기'));
+
+  /* ---------- 방 넘기기: -1 = 남자 온천(왼쪽 방), 0 = 카운터, 1 = 여자 온천(오른쪽 방) ---------- */
+  //   -2 = 남자 온천 2, 2 = 여자 온천 2 (Lv.30부터), 카운터 위쪽 = 휴게실
+  const lobbyUi = document.getElementById('lobbyUi'), restUi = document.getElementById('restUi');
+  let view = 0, cam = 0;         // 가로 자리
+  let viewY = 0, camY = 0;       // 세로 자리: 0 = 1층, -1 = 휴게실
+  const UNLOCK_ROOM2 = 30;       // 온천방이 하나씩 더 생기는 레벨
+  const UNLOCK_REST = 1;         // 휴게실이 열리는 레벨 (1 = 처음부터 열려 있어요)
+  const SOAK = 60000;            // 온천에 들어간 또덕이가 몸 담그는 시간 (60초)
+  const TUB = {x:.262, y:.300, w:.711, h:.824};     // 온천탕 그림 자리
+  const TUB_SHOW = 4;            // 탕 하나에 보이는 또덕이 수 (그 뒤로는 안 보여도 탕 안에 있어요)
+  const TUB_CAP = [25, 60];      // 탕에 한꺼번에 받을 수 있는 손님 (모든 탕 합쳐서): 처음 ~ 온천방 2가 열린 뒤
+  const tubCap = () => TUB_CAP[level() >= UNLOCK_ROOM2 ? 1 : 0];
+  const tubCount = () => Object.values(ROOMS).reduce((a, r) => a + r.soaking.length, 0);
+  // 온천 방: soaking = 들어가 있는 또덕이들 (until = 나가는 시각, towel = 양머리 수건을 썼는지)
+  // slots = 또덕이가 앉는 네 자리 (온천탕 그림 안에서의 비율): 바위에 기댄 뒤쪽 두 자리, 물 가운데 앞쪽 두 자리
+  // towel = 양머리 수건 쓴 그림 (dx는 수건만큼 옆으로 옮기는 정도)
+  const MEN   = { duck:'duck2',  w:.2767, h:.2853, towel:{ img:'towelM', w:.3000, h:.2853, dx:-.0055 },
+                  slots:[{x:.278, y:.225}, {x:.598, y:.250}, {x:.257, y:.487}, {x:.567, y:.500}] };
+  const WOMEN = { duck:'duck2f', w:.2689, h:.3362, towel:{ img:'towelF', w:.3078, h:.3362, dx:-.0202 },
+                  slots:[{x:.282, y:.220}, {x:.602, y:.245}, {x:.261, y:.482}, {x:.571, y:.495}] };
+  const ROOMS = {
+    m:  { ...MEN,   at:-1, soaking:[], ui:'menUi',    name:'남자 온천' },
+    f:  { ...WOMEN, at: 1, soaking:[], ui:'womenUi',  name:'여자 온천' },
+    m2: { ...MEN,   at:-2, soaking:[], ui:'men2Ui',   name:'남자 온천 2' },   // Lv.30부터
+    f2: { ...WOMEN, at: 2, soaking:[], ui:'women2Ui', name:'여자 온천 2' },   // Lv.30부터
+  };
+  for (const r of Object.values(ROOMS)) { r.ui = document.getElementById(r.ui); r.walkers = []; }
+  const ROOM_AT = { '-1':'m', '-2':'m2', '1':'f', '2':'f2' };   // 가로 자리 → 온천방
+  // 온천을 마친 또덕이: 탕에서 나와 카운터 쪽으로 걸어 나가요 (남탕은 오른쪽, 여탕은 왼쪽이 카운터)
+  const WALK_OUT = 1900;         // 온천방을 걸어 나가는 시간
+  const STOOL = { x:.135, w:.190, bottom:.975 };   // 의자 그림 자리 (가운데 x, 너비, 바닥 y)
+  // 머리 감는 그림: 그림 속 의자가 위 의자 자리에 딱 겹치게 맞춰요 (w = 의자 너비의 몇 배, ratio = 세로/가로, by = 의자 바닥의 높이 비율)
+  const WASH = { w:1.0446, ratio:1.7599, by:.9874, fps:9 };
+  const SHOWER_TIME = 3500;      // 씻는 시간
+  function enterTub(key, who, now) {
+    const tub = ROOMS[key].soaking;
+    while (tub.length && tub[0].until <= now) leaveTub(key, now);
+    if (tubCount() >= tubCap()) {                        // 꽉 찼으면 어느 탕이든 가장 오래 있던 또덕이가 나가요
+      let old = null;
+      for (const [k, r] of Object.entries(ROOMS)) if (r.soaking.length && (!old || r.soaking[0].until < ROOMS[old].soaking[0].until)) old = k;
+      leaveTub(old, now);
+    }
+    let slot = [0, 1, 2, 3].find(i => !tub.some(d => d.slot === i));   // 빈 자리 중 맨 앞 번호 (자리가 없으면 안 보이는 곳에)
+    if (slot === undefined) slot = -1;
+    tub.push({ slot, kind:who.kind, towel:who.towel, noTowel:who.noTowel, noShampoo:who.noShampoo, until: now + SOAK,  // orderAt = 탕에서 음식을 시킬 시각 (0 = 안 시켜요)
+               orderAt: Math.random() < FOOD_CHANCE ? now + ORDER_AFTER[0] + Math.random() * (ORDER_AFTER[1] - ORDER_AFTER[0]) : 0 });
+  }
+  // 씻는 자리 그림: 벽 거울, 수도꼭지, 줄 달린 샤워기는 그려 넣은 것이고 의자는 받은 그림이에요
+  function drawShower(ox, now, part, busy) {
+    const u = S, X = v => ox + v * u, Y = v => v * u;
+    const INK = '#1c1000', METAL = '#c3ced6';
+    ctx.save(); ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+    const box = (x, y, w, h, r, fill) => {
+      ctx.beginPath(); ctx.roundRect ? ctx.roundRect(X(x), Y(y), w * u, h * u, r * u) : ctx.rect(X(x), Y(y), w * u, h * u);
+      ctx.fillStyle = fill; ctx.fill(); ctx.strokeStyle = INK; ctx.lineWidth = u * .006; ctx.stroke();
+    };
+    const tube = (draw, wide, color) => {                  // 테두리가 있는 관
+      ctx.strokeStyle = INK; ctx.lineWidth = u * wide; draw(); ctx.stroke();
+      ctx.strokeStyle = color; ctx.lineWidth = u * (wide - .011); draw(); ctx.stroke();
+    };
+    if (part === 'base') {
+      // 의자 (또덕이가 여기 앉아서 씻어요)
+      const sw_ = STOOL.w * u, sh_ = sw_ * assets.stool.height / assets.stool.width;
+      ctx.drawImage(assets.stool, X(STOOL.x) - sw_ / 2, Y(STOOL.bottom) - sh_, sw_, sh_);
+      // 벽 거울
+      box(.028, .405, .165, .150, .012, '#eef2f4');
+      box(.040, .417, .141, .126, .006, '#bfe3f2');
+      ctx.strokeStyle = 'rgba(255,255,255,.9)'; ctx.lineWidth = u * .007;
+      ctx.beginPath(); ctx.moveTo(X(.060), Y(.500)); ctx.lineTo(X(.100), Y(.435)); ctx.moveTo(X(.085), Y(.515)); ctx.lineTo(X(.118), Y(.462)); ctx.stroke();
+      // 수도꼭지 (거울 왼쪽 아래): 벽 고정판, 빨강·파랑 손잡이, 물 나오는 주둥이
+      box(.022, .578, .072, .050, .012, '#eef2f4');
+      ctx.strokeStyle = INK; ctx.lineWidth = u * .006;
+      ctx.fillStyle = '#ff3d28'; ctx.beginPath(); ctx.arc(X(.042), Y(.603), u * .012, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+      ctx.fillStyle = '#4aa8ff'; ctx.beginPath(); ctx.arc(X(.074), Y(.603), u * .012, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+      tube(() => { ctx.beginPath(); ctx.moveTo(X(.058), Y(.628)); ctx.lineTo(X(.058), Y(.652)); ctx.lineTo(X(.082), Y(.652)); }, .020, METAL);
+      // 샤워기 줄: 수도꼭지에서 아래로 늘어졌다가 거울 오른쪽 걸이까지 올라가요
+      tube(() => { ctx.beginPath(); ctx.moveTo(X(.094), Y(.606)); ctx.bezierCurveTo(X(.150), Y(.690), X(.232), Y(.640), X(.222), Y(.520)); }, .017, '#dfe6ea');
+      // 걸이와 샤워기 (손잡이 + 머리)
+      box(.207, .470, .030, .026, .006, METAL);
+      tube(() => { ctx.beginPath(); ctx.moveTo(X(.222), Y(.530)); ctx.lineTo(X(.222), Y(.455)); }, .024, '#eef2f4');
+      ctx.fillStyle = '#eef2f4'; ctx.strokeStyle = INK; ctx.lineWidth = u * .006;
+      ctx.beginPath(); ctx.ellipse(X(.208), Y(.440), u * .034, u * .021, -.5, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+    } else if (busy) {                                     // 샤워기 머리에서 또덕이 쪽으로 쏟아지는 물줄기
+      ctx.strokeStyle = 'rgba(110,190,255,.9)'; ctx.lineWidth = u * .006;
+      ctx.setLineDash([u * .030, u * .028]); ctx.lineDashOffset = -(now / 5 % (u * .058));
+      for (let i = 0; i < 6; i++) {
+        const k = i / 5;
+        ctx.beginPath(); ctx.moveTo(X(.196 - k * .020), Y(.462 - k * .012 + .012)); ctx.lineTo(X(.205 - k * .135), Y(.700 + k * .060)); ctx.stroke();
+      }
+    }
+    ctx.restore();
+  }
+  function leaveTub(key, now, who, huff) {   // who를 안 주면 가장 오래 있던 또덕이, huff = 화나서 나가는 중
+    const r = ROOMS[key]; who = who || r.soaking[0];
+    r.soaking.splice(r.soaking.indexOf(who), 1);
+    if (r.order && r.order.who === who) { r.order = null; if (!huff) { who.late = true; mood(-3); } }   // 음식을 못 받고 나가요
+    review(who, key, huff);
+    if (who.slot >= 0) { const next = r.soaking.find(d => d.slot < 0); if (next) next.slot = who.slot; }   // 보이는 자리가 비면 다음 또덕이가 나와요
+    const toRight = r.at < 0;
+    r.walkers.push({ sex:key[0], kind:who.kind, towel:who.towel, huff, t0:now, fx: toRight ? .74 : .26, tx: toRight ? 1.20 : -.20, y:.90, h:.36 });
+  }
+  /* 꽥꽥이: 물 위를 천천히 떠다니다가 또덕이가 가까우면 비켜 가요 (탕 그림 안에서의 비율) */
+  function moveToy(r, now) {
+    const t = r.toyAt || (r.toyAt = { x:.86, y:.62, a:Math.random() * 6.28, dir:-1, last:now });
+    const dt = Math.min(.05, (now - t.last) / 1000); t.last = now;
+    if (dt <= 0) return t;
+    t.a += Math.sin(now / 1700 + r.at * 2) * .7 * dt;
+    let vx = Math.cos(t.a) * .040, vy = Math.sin(t.a) * .026, pushed = false;
+    for (const d of r.soaking) {                           // 또덕이 피하기
+      if (d.slot < 0) continue;
+      const e = r.slots[d.slot], dx = t.x - (e.x + r.w / 2), dy = (t.y - (e.y + r.h * .62)) * TUB.h / TUB.w, dist = Math.hypot(dx, dy) || .001;
+      if (dist < .27) { const f = (.27 - dist) / .27 * .30; vx += dx / dist * f; vy += dy / dist * f * TUB.w / TUB.h; pushed = true; }
+    }
+    const ex = (t.x - .56) / .36, ey = (t.y - .66) / .19, q = ex * ex + ey * ey;   // 물 밖으로는 안 나가요
+    if (q > 1) { vx -= ex * .16 * q; vy -= ey * .10 * q; pushed = true; }
+    if (pushed) t.a = Math.atan2(vy / .026, vx / .040);
+    t.x += vx * dt; t.y = Math.min(.83, t.y + vy * dt);
+    if (Math.abs(vx) > .012) t.dir = vx > 0 ? 1 : -1;      // 가는 쪽을 봐요
+    return t;
+  }
+  const level = () => levelOf(served);
+  const REST_AT = 3;               // 휴게실 자리: 온천방 2를 지나 한 번 더 넘긴 곳 (왼쪽 끝과 오른쪽 끝이 같은 휴게실이에요)
+  const restSide = () => cam < 0 ? -REST_AT : REST_AT;
+  function go(x) {                 // 잠긴 방도 가 볼 수는 있어요 (자물쇠로 덮여 있어요)
+    viewY = 0; view = Math.max(-REST_AT, Math.min(REST_AT, x));
+    const k = viewY ? null : ROOM_AT[view];             // 넘기는 그 순간(손가락을 뗄 때) 바로 소리를 맞춰요
+    ambience(!!k && !ROOMS[k].ui.classList.contains('is-locked'));
+  }
+  // 또덕이가 들어갈 온천방: 열려 있는 방 중 덜 찬 곳
+  function pickRoom(sex) {
+    const keys = level() >= UNLOCK_ROOM2 ? [sex, sex + '2'] : [sex];
+    return keys.reduce((a, k) => ROOMS[k].soaking.length < ROOMS[a].soaking.length ? k : a);
+  }
+
+  /* ---------- 상점 · 온천 설정 ---------- */
+  const pic = (vb, body) => 'data:image/svg+xml,' + encodeURIComponent(
+    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${vb}" fill="none" stroke="#1c1000" stroke-width="2.6" stroke-linejoin="round" stroke-linecap="round">${body}</svg>`);
+  const PIC = {
+    lantern: pic('0 0 60 96', '<path d="M12 80h36l4 11H8z" fill="#6f6f6f"/><rect x="24" y="52" width="12" height="28" fill="#8d8d8d"/><rect x="14" y="26" width="32" height="26" rx="2" fill="#ffe27a"/><path d="M30 26v26M14 39h32" stroke-width="2"/><path d="M6 27L30 7l24 20z" fill="#6b5a50"/>'),
+    shampoo: pic('0 0 64 52', '<rect x="22" y="20" width="22" height="28" rx="5" fill="#ff9ec4"/><rect x="26" y="28" width="14" height="11" rx="2" fill="#fff"/><path d="M33 20v-9M33 11h-10v4"/><rect x="29" y="13" width="8" height="7" rx="1.500" fill="#dfe6ea"/>'),
+    towel:   pic('0 0 64 52', '<rect x="10" y="13" width="44" height="28" rx="6" fill="#fff"/><path d="M10 22h44M10 32h44" stroke="#ff8fa3" stroke-width="3"/><path d="M18 13v28" stroke-width="2"/>'),
+    toy:     pic('0 0 64 52', '<ellipse cx="28" cy="36" rx="20" ry="12" fill="#ffd93b"/><circle cx="42" cy="20" r="11" fill="#ffd93b"/><path d="M51 18l10 3-9 5z" fill="#ff9b1c"/><circle cx="45" cy="17" r="1.7" fill="#1c1000" stroke="none"/><path d="M16 34c4 6 13 6 17 0"/>'),
+    banana:  pic('0 0 64 52', '<path d="M22 18l6-9h8l6 9v28H22z" fill="#ffe680"/><path d="M22 18h20"/><path d="M27 36c5 4 10 1 11-6" stroke="#ff9b1c" stroke-width="3.4"/>'),
+    egg:     pic('0 0 64 52', '<ellipse cx="19" cy="33" rx="9" ry="12" fill="#d9a066"/><ellipse cx="45" cy="33" rx="9" ry="12" fill="#d9a066"/><ellipse cx="32" cy="25" rx="9" ry="12" fill="#e6b47a"/>'),
+    sikhye:  pic('0 0 64 52', '<path d="M20 8h24l-3 38H23z" fill="#fff6dc"/><path d="M21 18h22"/><g fill="#1c1000" stroke="none"><circle cx="28" cy="28" r="1.5"/><circle cx="35" cy="33" r="1.5"/><circle cx="30" cy="38" r="1.5"/><circle cx="37" cy="25" r="1.5"/></g>'),
+    ramen:   pic('0 0 64 52', '<path d="M17 18h30l-4 28H21z" fill="#ff6b4a"/><path d="M14 18h36" stroke-width="4"/><path d="M22 11c2-5 4 4 6 0s4 4 6 0 4 4 6 0" stroke="#e8a93a"/>'),
+    udon:    pic('0 0 64 52', '<path d="M8 26h48c0 12-10 20-24 20S8 38 8 26z" fill="#fff"/><path d="M15 26c4-6 8 2 12-2s8 4 12-1 8 3 10 3" stroke="#e8a93a"/><path d="M40 5l9 19M46 4l7 19"/>'),
+  };
+  // 물 종류: bonus = 입장료에 더 받는 돈, color = 물 색, wash = 색을 덧입히는 정도
+  const WATERS = {
+    base: { name:'기본탕', bonus:0 },
+    cold: { name:'냉탕', bonus:500, color:'#4aa8ff', wash:0.28 },
+    yuja: { name:'유자탕', bonus:1000, color:'#ffd43a', wash:0.2 },
+    ssuk: { name:'쑥탕', bonus:2000, color:'#86c46e', wash:0.2 },
+    salt: { name:'소금탕', bonus:2500, color:'#bfe6f5', wash:0.42 },
+    kkot: { name:'꽃잎탕', bonus:3000, color:'#ff96bb', wash:0.18 },
+    milk: { name:'우유탕', bonus:4000, color:'#ffffff', wash:0.55 },
+    insam: { name:'인삼탕', bonus:5000, color:'#b9822a', wash:0.42 },
+    wine: { name:'와인탕', bonus:6000, color:'#7a2a80', wash:0.55 },
+    rose: { name:'장미탕', bonus:7000, color:'#d81e3c', wash:0.5 },
+  };
+  const ITEMS = [
+    { id:'towel',   tab:'onsen', pack:TOWEL_PACK,   store:'towels',  unit:'장', name:`수건 ${TOWEL_PACK}장`, desc:'가져갈 때마다 +800 또코인', price:5000, pic:PIC.towel, fit:true },
+    { id:'shampoo', tab:'onsen', pack:SHAMPOO_PACK, store:'shampoo', unit:'번', name:`샴푸 ${SHAMPOO_PACK}번`, desc:`씻을 때마다 +${SHAMPOO_PRICE.toLocaleString('ko-KR')} 또코인`, price:3000, pic:PIC.shampoo, fit:true },
+    { id:'cold', tab:'onsen', name:'냉탕', desc:'입장료 +500 또코인', price:45000, pic:'img/thumb_cold.jpg' },
+    { id:'yuja', tab:'onsen', name:'유자탕', desc:'입장료 +1,000 또코인', price:75000, pic:'img/thumb_yuja.jpg' },
+    { id:'ssuk', tab:'onsen', name:'쑥탕', desc:'입장료 +2,000 또코인', price:120000, pic:'img/thumb_ssuk.jpg' },
+    { id:'salt', tab:'onsen', name:'소금탕', desc:'입장료 +2,500 또코인', price:150000, pic:'img/thumb_salt.jpg' },
+    { id:'kkot', tab:'onsen', name:'꽃잎탕', desc:'입장료 +3,000 또코인', price:180000, pic:'img/thumb_kkot.jpg' },
+    { id:'milk', tab:'onsen', name:'우유탕', desc:'입장료 +4,000 또코인', price:225000, pic:'img/thumb_milk.jpg' },
+    { id:'insam', tab:'onsen', name:'인삼탕', desc:'입장료 +5,000 또코인', price:270000, pic:'img/thumb_insam.jpg' },
+    { id:'wine', tab:'onsen', name:'와인탕', desc:'입장료 +6,000 또코인', price:330000, pic:'img/thumb_wine.jpg' },
+    { id:'rose', tab:'onsen', name:'장미탕', desc:'입장료 +7,000 또코인', price:390000, pic:'img/thumb_rose.jpg' },
+    { id:'lantern', tab:'onsen', name:'랜턴',       desc:'탕 옆을 은은하게 밝혀요',     price:60000,  pic:PIC.lantern, fit:true },
+    { id:'toy',     tab:'onsen', name:'꽥꽥이',     desc:'물에 둥둥 뜨는 오리 장난감',  price:45000,  pic:PIC.toy, fit:true },
+    { id:'banana',  tab:'food',  name:'바나나우유', desc:'하나 팔면 +1,200 또코인', price:1000, pay:1200, pic:PIC.banana, fit:true },
+    { id:'egg',     tab:'food',  name:'구운 달걀',  desc:'하나 팔면 +1,000 또코인', price:800, pay:1000, pic:PIC.egg, fit:true },
+    { id:'sikhye',  tab:'food',  name:'식혜',       desc:'하나 팔면 +1,500 또코인', price:1300, pay:1500, pic:PIC.sikhye, fit:true },
+    { id:'ramen',   tab:'food',  name:'컵라면',     desc:'하나 팔면 +2,200 또코인', price:2000, pay:2200, pic:PIC.ramen, fit:true },
+    { id:'udon',    tab:'food',  name:'우동',       desc:'하나 팔면 +3,700 또코인', price:3500, pay:3700, pic:PIC.udon, fit:true },
+  ];
+  const FOOD_CHANCE = .6;        // 탕에 들어온 또덕이가 음식을 시킬 확률 (가진 음식이 하나라도 있을 때)
+  const ORDER_AFTER = [5000, 22000];   // 탕에 들어온 뒤 주문하기까지 걸리는 시간 (가장 짧게 ~ 가장 길게)
+  const FOODS = ITEMS.filter(i => i.tab === 'food');
+  const COIN = '또코인';          // 돈 이름
+  const won = n => `<img class="coin" src="img/coin.png" alt="${COIN}">${n.toLocaleString('ko-KR')}`;
+
+  // 산 것과 방 설정 (이 기기에 저장해 두고 다음에 이어서 해요)
+  const SAVE_KEY = 'ttodeok-onsen-v1';
+  const newRoom = () => ({ water:'base', lantern:false, toy:false });
+  const ROOM_KEYS = Object.keys(ROOMS);
+  const save = { nick:'', owned:{}, stock:{}, towels:TOWEL_PACK, shampoo:0, trash:0, mood:0, stale:0, reviews:[], unread:0, vol:{ fx:.7, amb:.5, bgm:.45 }, tut:false, book:{ guests:{}, foods:{}, waters:{} }, rooms:Object.fromEntries(ROOM_KEYS.map(k => [k, newRoom()])) };
+  try {
+    const old = JSON.parse(localStorage.getItem(SAVE_KEY) || 'null');
+    if (old) {
+      money = +old.money || 0; served = +old.served || 0;
+      Object.assign(save.owned, old.owned);
+      Object.assign(save.stock, old.stock);
+      if (typeof old.towels === 'number') save.towels = Math.max(0, old.towels);
+      if (typeof old.shampoo === 'number') save.shampoo = Math.max(0, old.shampoo);
+      if (typeof old.nick === 'string') save.nick = old.nick.trim();
+      if (typeof old.trash === 'number') save.trash = Math.max(0, old.trash);
+      if (typeof old.stale === 'number') save.stale = Math.max(0, old.stale);
+      if (Array.isArray(old.reviews)) save.reviews = old.reviews.filter(v => v && v.s >= 1 && v.s <= 5 && typeof v.t === 'string').slice(0, 30);
+      save.unread = +old.unread || 0;
+      if (typeof old.mood === 'number') save.mood = Math.max(-20, Math.min(10, old.mood));
+      for (const k of ['fx', 'amb', 'bgm']) if (old.vol && typeof old.vol[k] === 'number') save.vol[k] = Math.min(1, Math.max(0, old.vol[k]));
+      save.tut = !!old.tut || (+old.served || 0) > 0;     // 이미 해 본 사람에게는 안내를 다시 띄우지 않아요
+      for (const k of ['guests', 'foods', 'waters']) Object.assign(save.book[k], old.book && old.book[k]);
+      for (const i of ITEMS) if (i.tab === 'food' && save.owned[i.id]) {   // 예전 방식으로 산 음식은 5개로 바꿔 줘요
+        delete save.owned[i.id]; save.stock[i.id] = (save.stock[i.id] || 0) + 5;
+      }
+      for (const k of ROOM_KEYS) Object.assign(save.rooms[k], old.rooms && old.rooms[k]);
+      for (const k of ROOM_KEYS) if (!WATERS[save.rooms[k].water]) save.rooms[k].water = 'base';
+      for (const k of ['m2', 'f2']) if (save.rooms[k].water !== 'base' && ROOM_KEYS.some(o => o !== k && save.rooms[o].water === save.rooms[k].water)) save.rooms[k].water = 'base';
+    }
+  } catch (e) {}
+  function keep() {
+    renderBag();
+    try { localStorage.setItem(SAVE_KEY, JSON.stringify({ nick:save.nick, money, served, owned:save.owned, stock:save.stock, towels:save.towels, shampoo:save.shampoo, trash:save.trash, mood:save.mood, stale:save.stale, reviews:save.reviews, unread:save.unread, vol:save.vol, tut:save.tut, book:save.book, rooms:save.rooms })); } catch (e) {}
+  }
+  const banner = document.getElementById('banner'); let bannerTimer = 0;
+  function announce(text) {
+    banner.textContent = text; banner.style.whiteSpace = 'pre-line'; banner.classList.add('show');
+    clearTimeout(bannerTimer); bannerTimer = setTimeout(() => banner.classList.remove('show'), 4000);
+  }
+  const LEVEL_EVERY = 5;         // 돈 낸 손님 몇 명마다 1레벨 오르는지
+  const levelOf = n => 1 + Math.floor(n / LEVEL_EVERY);
+  let shownLevel = 0;
+  function showLevel() {
+    const lv = levelOf(served), el = document.getElementById('level');
+    document.getElementById('levelText').textContent = 'Lv.' + lv;
+    document.getElementById('levelFill').style.width = (served % LEVEL_EVERY) / LEVEL_EVERY * 100 + '%';
+    el.setAttribute('aria-label', `레벨 ${lv}`);
+    if (shownLevel && lv > shownLevel) {                              // 레벨 업!
+      el.classList.remove('up'); void el.offsetWidth; el.classList.add('up');
+      if (shownLevel < UNLOCK_ROOM2 && lv >= UNLOCK_ROOM2) announce(`Lv.${UNLOCK_ROOM2}! 남탕과 여탕에\n온천방이 하나씩 더 생겼어요`);
+      if (shownLevel < UNLOCK_REST && lv >= UNLOCK_REST) announce(`Lv.${UNLOCK_REST}! 휴게실이 열렸어요`);
+    }
+    shownLevel = lv;
+    ROOMS.m2.ui.classList.toggle('is-locked', lv < UNLOCK_ROOM2);
+    ROOMS.f2.ui.classList.toggle('is-locked', lv < UNLOCK_ROOM2);
+    restUi.classList.toggle('is-locked', lv < UNLOCK_REST);
+  }
+  /* ---------- 또코인을 얻을 때: 글씨가 뜨고, 거기서 또코인이 빙글빙글 돌며 지갑으로 날아가요 ---------- */
+  const fx = document.getElementById('fx'), walletEl = document.getElementById('wallet');
+  let flying = 0;                 // 아직 지갑에 도착하지 않은 또코인
+  const COIN_EACH = 1000;         // 날아가는 또코인 1개가 나타내는 금액
+  const calm = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+  // wx·wy = 얻은 자리 (카운터 방 기준 0~1, 남탕은 x가 -1~0, 여탕은 1~2). text = 띄울 글씨 (없으면 글씨 없이 또코인만)
+  /* ---------- 또코인 소리: 또코인이 지갑에 들어올 때 나요 ---------- */
+  const COIN_SOUND = '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//PkZAAAAAGkAOAAAAAAA0gBwAAATEFNRTMuMTAwVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVTEFNRTMuMTAwVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV';
+  let sound = null, coinBuf = null;
+  function unlockSound() {        // 브라우저는 화면을 한 번 누른 뒤에야 소리를 낼 수 있어요
+    try {
+      if (!sound) {
+        const AC = window.AudioContext || window.webkitAudioContext; if (!AC) return;
+        sound = new AC();
+        const bin = atob(COIN_SOUND), bytes = new Uint8Array(bin.length);
+        for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+        const done = b => { coinBuf = b; }, r = sound.decodeAudioData(bytes.buffer, done, () => {});
+        if (r && r.catch) r.catch(() => {});
+      }
+      if (sound.state === 'suspended') sound.resume().catch(() => {});
+      primeAmbience(); primeBgm();
+    } catch (e) {}
+  }
+  addEventListener('pointerdown', unlockSound, true);
+  addEventListener('keydown', unlockSound, true);
+  function coinSound() {
+    if (!sound || !coinBuf || sound.state !== 'running' || save.vol.fx <= 0) return;
+    try {
+      const src = sound.createBufferSource(), vol = sound.createGain();
+      src.buffer = coinBuf; vol.gain.value = save.vol.fx;
+      src.connect(vol); vol.connect(sound.destination); src.start();
+    } catch (e) {}
+  }
+  /* ---------- 온천방 소리: 온천방에 들어가 있는 동안 계속 나요 ---------- */
+  // 소리 크기는 설정에서 바꿔요: save.vol.fx = 효과음, save.vol.amb = 온천방 소리 (0 ~ 1)
+  let amb = null, ambVol = null, ambOn = false, ambStop = 0;
+  function primeAmbience() {      // 첫 터치 때 한 번 틀어 봐야, 나중에 방에 들어갈 때 폰이 소리를 허락해요
+    if (amb || !sound) return;
+    try {
+      amb = new Audio('audio/onsen.mp3'); amb.loop = true; amb.preload = 'auto';
+      try {                       // 소리가 스르륵 커지고 작아지게
+        ambVol = sound.createGain(); ambVol.gain.value = 0;
+        sound.createMediaElementSource(amb).connect(ambVol); ambVol.connect(sound.destination);
+      } catch (e) { ambVol = null; amb.volume = save.vol.amb; }
+      const p = amb.play();
+      if (p && p.then) p.then(() => { if (!ambOn) amb.pause(); else ambience(true); }, () => {});
+    } catch (e) { amb = null; }
+  }
+  /* ---------- 배경음악: 느긋한 알앤비 (직접 만든 곡, 끊김 없이 반복) ---------- */
+  const BGM_LEN = 91.428571;      // 곡 길이(초): 32마디
+  let bgmVol = null, bgmAsked = false, bgmHidden = false;
+  function bgmLevel() {           // 온천방에서는 물소리가 들리게 작게
+    if (!bgmVol || !sound) return;
+    try { bgmVol.gain.setTargetAtTime(bgmHidden ? 0 : save.vol.bgm * (ambOn ? .35 : 1), sound.currentTime, .25); } catch (e) {}
+  }
+  function primeBgm() {
+    if (bgmAsked || !sound) return;
+    bgmAsked = true;
+    fetch('audio/bgm.mp3').then(r => r.arrayBuffer()).then(b => new Promise((ok, no) => sound.decodeAudioData(b, ok, no))).then(buf => {
+      const d = buf.getChannelData(0); let i = 0;
+      while (i < d.length && Math.abs(d[i]) < .01) i++;         // mp3 앞의 빈 소리를 건너뛰어야 이음새가 안 들려요
+      const s0 = Math.max(0, i / buf.sampleRate - .002), src = sound.createBufferSource();
+      src.buffer = buf; src.loop = true; src.loopStart = s0; src.loopEnd = Math.min(buf.duration, s0 + BGM_LEN);
+      bgmVol = sound.createGain(); bgmVol.gain.value = 0;
+      src.connect(bgmVol); bgmVol.connect(sound.destination); src.start(0, s0); bgmLevel();
+    }).catch(() => { bgmAsked = false; });
+  }
+  function ambience(on) {
+    ambOn = on; bgmLevel();
+    if (!amb || !sound) return;
+    try {
+      clearTimeout(ambStop);
+      const t = sound.currentTime, fade = v => {
+        if (!ambVol) return;
+        ambVol.gain.cancelScheduledValues(t); ambVol.gain.setValueAtTime(ambVol.gain.value, t);
+        ambVol.gain.linearRampToValueAtTime(v, t + .7);
+      };
+      if (on) { const p = amb.play(); if (p && p.catch) p.catch(() => {}); fade(save.vol.amb); if (!ambVol) amb.volume = save.vol.amb; }
+      else { fade(0); ambStop = setTimeout(() => { if (!ambOn) amb.pause(); }, ambVol ? 750 : 0); }
+    } catch (e) {}
+  }
+  function applyVolume() {         // 설정에서 크기를 바꾸면 바로 반영해요
+    bgmLevel();
+    if (!amb || !sound) return;
+    try {
+      if (ambVol) { if (ambOn) { ambVol.gain.cancelScheduledValues(sound.currentTime); ambVol.gain.value = save.vol.amb; } }
+      else amb.volume = save.vol.amb;
+    } catch (e) {}
+  }
+  document.addEventListener('visibilitychange', () => { bgmHidden = document.hidden; bgmLevel(); });
+  document.addEventListener('visibilitychange', () => {   // 다른 앱으로 나가면 소리를 멈춰요
+    if (!amb) return;
+    if (document.hidden) amb.pause(); else if (ambOn) ambience(true);
+  });
+  function gain(amount, wx, wy, text) {
+    money += amount;
+    const x = Math.min(.83, Math.max(.17, wx - cam)), y = Math.min(.92, Math.max(.12, wy - camY));
+    if (calm || !fx.animate) { showMoney(); coinSound(); return; }
+    flying += amount;
+    if (text) {
+      const t = document.createElement('div'); t.className = 'gain'; t.textContent = text;
+      t.style.left = x * 100 + '%'; t.style.top = y * 100 + '%';
+      fx.appendChild(t); setTimeout(() => t.remove(), 1150);
+    }
+    // 1,000 또코인마다 또코인 1개: 전부 한꺼번에 빙글빙글 돌면서 지갑으로 날아가요 (1,000보다 적어도 1개는 날아가요)
+    const count = Math.max(1, Math.floor(amount / COIN_EACH));
+    const a = fx.getBoundingClientRect(), w = walletEl.getBoundingClientRect();
+    const spread = Math.min(.10, .028 * Math.sqrt(count - 1)) * a.width;   // 많을수록 넓게 흩어져서 나와요
+    const coins = [];
+    let landed = false;
+    const arrive = () => {
+      if (landed) return; landed = true;
+      coins.forEach(c => c.remove()); flying -= amount; showMoney(); coinSound();
+      walletEl.classList.remove('bump'); void walletEl.offsetWidth; walletEl.classList.add('bump');
+    };
+    for (let i = 0; i < count; i++) {
+      const c = document.createElement('img'); c.className = 'fly'; c.src = 'img/coin.png'; c.alt = '';
+      c.style.left = x * 100 + '%'; c.style.top = y * 100 + '%';
+      fx.appendChild(c); coins.push(c);
+      const ang = i * 2.399963 + .6, rad = spread * Math.sqrt((i + .5) / count);   // 해바라기 씨처럼 고르게 퍼지는 자리
+      const sx = Math.cos(ang) * rad, sy = Math.sin(ang) * rad * .8 - a.height * .04;
+      const dx = w.left + w.height / 2 - a.left - x * a.width, dy = w.top + w.height / 2 - a.top - y * a.height;
+      const fly = c.animate([
+        { transform:'translate(0,0) rotateY(0deg) scale(.3)', opacity:0 },
+        { transform:`translate(${sx}px,${sy}px) rotateY(360deg) scale(1.1)`, opacity:1, offset:.28 },
+        { transform:`translate(${dx}px,${dy}px) rotateY(1440deg) scale(.7)`, opacity:1 },
+      ], { duration:1100, delay: text ? 250 : 0, easing:'cubic-bezier(.45,0,.55,1)', fill:'both' });
+      fly.onfinish = arrive; fly.oncancel = arrive;
+    }
+  }
+  function showMoney() {
+    showLevel();
+    document.getElementById('hudGuests').textContent = `손님 ${served}명`;
+    document.getElementById('wallet').innerHTML = won(money - flying);   // 날아오는 중인 또코인은 도착하면 더해져요
+    document.getElementById('sheetMoney').innerHTML = won(money);
+  }
+  showMoney();
+  const left = id => save.stock[id] || 0;                     // 냉장고에 남은 개수
+  const ownedFoods = () => ITEMS.filter(i => i.tab === 'food' && left(i.id) > 0);
+
+  const sheetWrap = document.getElementById('sheetWrap'), sheetList = document.getElementById('sheetList'), sheetTabs = document.getElementById('sheetTabs');
+  /* ---------- 단골 도감: 만난 손님, 판 음식, 손님이 들어간 탕을 세어 둬요 ---------- */
+  const note = (kind, id) => { save.book[kind][id] = (save.book[kind][id] || 0) + 1; };
+  const REGULAR = [5, 20, 50];   // 이만큼 만나면 별이 하나씩 늘어요 (별 1개부터 단골)
+  const BOOK_GUESTS = [
+    { id:'m',    name:'남자 또덕이',        pic:'img/m2.png',     desc:'보라색 나비넥타이가 멋져요' },
+    { id:'f',    name:'여자 또덕이',        pic:'img/f2.png',     desc:'분홍 리본을 달고 다녀요' },
+    { id:'tm',   name:'양머리 남자 또덕이', pic:'img/towelm.png', desc:'수건으로 양머리를 만들어 썼어요' },
+    { id:'tf',   name:'양머리 여자 또덕이', pic:'img/towelf.png', desc:'양머리가 리본을 쏙 가렸어요' },
+    { id:'wc',   name:'급한 또덕이',        pic:'img/f5.png',     desc:'온천보다 화장실이 먼저래요' },
+    { id:'granny', name:'할머니 또덕이',     pic:'img/g2.png',     desc:'꽃무늬 조끼에 분홍 안경을 썼어요' },
+    { id:'huff', name:'삐진 또덕이',        pic:'img/m3.png',     desc:'시킨 음식이 아니라서 나가 버렸어요' },
+  ];
+  let bookTab = 'guests';
+  function bookRows() {
+    const seen = (kind, id) => save.book[kind][id] || 0;
+    const entry = (kind, e, unit, known) => {
+      const n = seen(kind, e.id), found = known || n > 0, stars = REGULAR.filter(x => n >= x).length;
+      const badge = `<span class="stars">${'★'.repeat(stars)}${'☆'.repeat(REGULAR.length - stars)}<small>${stars ? '단골' : ''}</small></span>`;
+      return found ? row({ ...e, fit: e.fit !== false, desc:`${e.desc}<br>${unit(n)}` }, badge)
+                   : row({ ...e, fit: e.fit !== false, unknown:true, name:'???', desc:'아직 못 만났어요' }, '');
+    };
+    if (bookTab === 'guests') return BOOK_GUESTS.map(e => entry('guests', e, n => `${n}번 만났어요`));
+    if (bookTab === 'foods') return FOODS.map(e => entry('foods', { ...e, desc:'또덕이가 탕에서 시켜 먹어요' }, n => `${n}개 팔았어요`));
+    return Object.entries(WATERS).map(([id, w]) => {
+      const it = ITEMS.find(i => i.id === id) || { pic:PIC.blank, swatch:true };
+      return entry('waters', { id, name:w.name, pic:it.pic, swatch:it.swatch, fit:false, desc: id === 'base' ? '처음부터 있는 탕' : `입장료 +${w.bonus.toLocaleString('ko-KR')} 또코인` },
+        n => `${n}마리가 몸을 담갔어요`, id === 'base' || save.owned[id]);
+    });
+  }
+  function bookFound() {          // [찾은 개수, 전체 개수]
+    const g = BOOK_GUESTS.filter(e => save.book.guests[e.id]).length, f = FOODS.filter(e => save.book.foods[e.id]).length;
+    const w = Object.keys(WATERS).filter(id => id === 'base' || save.owned[id] || save.book.waters[id]).length;
+    return [g + f + w, BOOK_GUESTS.length + FOODS.length + Object.keys(WATERS).length];
+  }
+  let sheetKind = null, shopTab = 'onsen';
+  const row = (i, btn) => `<div class="item"><img class="pic${i.fit ? ' fit' : ''}${i.swatch ? ' swatch' : ''}${i.unknown ? ' unknown' : ''}" src="${i.pic}" alt=""><div><div class="name">${i.name}</div><div class="desc">${i.desc}</div></div>${btn}</div>`;
+  // 온천방 2(Lv.30 방)에서는 다른 방이 이미 쓰는 탕을 못 골라요 (그냥 탕은 어디서나 돼요)
+  const isRoom2 = k => k === 'm2' || k === 'f2';
+  const usedBy = (id, key) => id !== 'base' && isRoom2(key) ? ROOM_KEYS.find(k => k !== key && save.rooms[k].water === id) : undefined;
+  function renderSheet() {
+    showMoney();
+    if (sheetKind === 'settings') {           // 설정: 소리 크기 (끌고 있는 중에는 다시 그리지 않아요)
+      if (sheetList.dataset.kind === 'settings') return;
+      sheetList.dataset.kind = 'settings';
+      document.getElementById('sheetTitle').textContent = '설정';
+      sheetTabs.innerHTML = '';
+      const slider = (id, label, v) => `<div class="setrow"><label for="${id}">${label}</label><input type="range" id="${id}" min="0" max="100" step="5" value="${Math.round(v * 100)}"><output id="${id}Out">${Math.round(v * 100)}</output></div>`;
+      const esc = t => t.replace(/[&<>"]/g, ch => ({'&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;'}[ch]));
+      sheetList.innerHTML = `<div class="setrow" style="grid-template-columns:auto 1fr auto"><label>닉네임</label><b style="font-size:4.4cqw;overflow-wrap:anywhere;min-width:0">${esc(save.nick)}</b><button class="act" data-nick="1">바꾸기</button></div>` + slider('volFx', '효과음', save.vol.fx) + slider('volBgm', '배경음악', save.vol.bgm) + slider('volAmb', '온천 소리', save.vol.amb)
+        + '<div class="desc" style="font-size:3.3cqw;opacity:.75;text-align:center">0으로 내리면 소리가 꺼져요</div>'
+        + '<button class="act wide" data-replay="1">처음 안내 다시 보기</button>';
+      return;
+    }
+    sheetList.dataset.kind = sheetKind || '';
+    if (sheetKind === 'review') {             // 리뷰: 또덕이들이 남기고 간 별점과 글
+      const rv = save.reviews, avg = rv.length ? rv.reduce((a, v) => a + v.s, 0) / rv.length : 0;
+      document.getElementById('sheetTitle').textContent = '리뷰';
+      sheetTabs.innerHTML = '';
+      const face = { m:'img/m3.png', f:'img/f3.png', g:'img/g3.png' }, stars = n => `<span class="stars">${'★'.repeat(n)}<i>${'★'.repeat(5 - n)}</i></span>`;
+      sheetList.innerHTML = rv.length
+        ? `<div class="avg">평균 별점 ${avg.toFixed(1)} ${stars(Math.round(avg))} · 리뷰 ${rv.length}개</div>` + rv.map(v => `<div class="review"><img src="${face[v.k] || face.m}" alt=""><div>${stars(v.s)}<div class="txt">${v.t}</div></div></div>`).join('')
+        : '<div class="empty">아직 리뷰가 없어요.<br>손님 5명 중 1명쯤이 온천을 마치고 리뷰를 남겨요.</div>';
+      return;
+    }
+    if (sheetKind === 'book') {               // 단골 도감
+      const [got, all] = bookFound();
+      document.getElementById('sheetTitle').textContent = `단골 도감 ${got}/${all}`;
+      sheetTabs.innerHTML = [['guests', '손님'], ['foods', '음식'], ['waters', '탕']].map(([k, t]) =>
+        `<button class="tab" role="tab" data-tab="${k}" aria-selected="${k === bookTab}">${t}</button>`).join('');
+      sheetList.innerHTML = bookRows().join('');
+    } else if (sheetKind === 'fridge') {      // 냉장고: 사 둔 음식과 남은 개수
+      document.getElementById('sheetTitle').textContent = '냉장고';
+      sheetTabs.innerHTML = '';
+      const foods = ownedFoods();
+      sheetList.innerHTML = foods.length ? foods.map(i => row(i, `<span class="count">${left(i.id)}개</span>`)).join('')
+        : '<div class="empty">냉장고가 비었어요.<br>상점의 음식 칸에서 사면 하나씩 들어와요.</div>';
+    } else if (sheetKind === 'shop') {
+      document.getElementById('sheetTitle').textContent = '상점';
+      sheetTabs.innerHTML = [['onsen', '온천 바꾸기'], ['food', '음식']].map(([k, t]) =>
+        `<button class="tab" role="tab" data-tab="${k}" aria-selected="${k === shopTab}">${t}</button>`).join('');
+      const buyBtn = i => `<button class="act" data-buy="${i.id}" ${money < i.price ? 'disabled' : ''}>${won(i.price)}</button>`;
+      sheetList.innerHTML = ITEMS.filter(i => i.tab === shopTab).map(i =>
+        i.pack ? row({ ...i, desc:`${i.desc}<br>지금 ${save[i.store]}${i.unit} 남았어요` }, buyBtn(i))
+        : i.tab === 'food' ? row({ ...i, desc:`${i.desc}<br>냉장고에 ${left(i.id)}개` }, buyBtn(i))
+        : row(i, save.owned[i.id] ? '<button class="act on" disabled>샀어요</button>' : buyBtn(i))).join('');
+    } else {
+      const cfg = save.rooms[sheetKind];
+      document.getElementById('sheetTitle').textContent = ROOMS[sheetKind].name + ' 설정';
+      sheetTabs.innerHTML = '';
+      const waters = Object.entries(WATERS).map(([id, w]) => {
+        const it = ITEMS.find(i => i.id === id) || { name:w.name, desc:'처음부터 있는 탕', pic:PIC.blank, swatch:true };
+        const have = id === 'base' || save.owned[id];
+        return row(it, !have ? '<button class="act" disabled>상점에서 사요</button>'
+          : cfg.water === id ? '<button class="act on" disabled>쓰는 중</button>'
+          : usedBy(id, sheetKind) ? `<button class="act" disabled>${ROOMS[usedBy(id, sheetKind)].name}에서 써요</button>`
+          : `<button class="act" data-water="${id}">선택</button>`);
+      }).join('');
+      const decos = ['lantern', 'toy'].map(id => {
+        const it = ITEMS.find(i => i.id === id);
+        return row(it, !save.owned[id] ? '<button class="act" disabled>상점에서 사요</button>'
+          : cfg[id] ? `<button class="act on" data-deco="${id}">치우기</button>`
+          : `<button class="act" data-deco="${id}">설치</button>`);
+      }).join('');
+      sheetList.innerHTML = `<div class="sub">물 고르기</div>${waters}<div class="sub">꾸미기</div>${decos}`;
+    }
+  }
+  PIC.blank = 'data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==';
+  function openSheet(kind) { sheetKind = kind; sheetWrap.classList.add('open'); renderSheet(); sheetList.scrollTop = 0; }
+  function closeSheet() { sheetKind = null; sheetList.dataset.kind = ''; sheetWrap.classList.remove('open'); }
+  document.getElementById('shop').addEventListener('click', () => openSheet('shop'));
+  document.getElementById('book').addEventListener('click', () => openSheet('book'));
+  document.getElementById('review').addEventListener('click', () => { save.unread = 0; keep(); showReviewDot(); openSheet('review'); });
+  showReviewDot();
+  document.getElementById('gear').addEventListener('click', () => openSheet('settings'));
+  sheetList.addEventListener('input', e => {             // 소리 크기 막대
+    const t = e.target; if (t.id !== 'volFx' && t.id !== 'volAmb' && t.id !== 'volBgm') return;
+    const v = t.value / 100; document.getElementById(t.id + 'Out').textContent = t.value;
+    if (t.id === 'volFx') save.vol.fx = v; else { save.vol[t.id === 'volBgm' ? 'bgm' : 'amb'] = v; applyVolume(); }
+  });
+  sheetList.addEventListener('change', e => {            // 손을 떼면 저장하고, 효과음은 한 번 들려줘요
+    if (e.target.id !== 'volFx' && e.target.id !== 'volAmb' && e.target.id !== 'volBgm') return;
+    keep(); if (e.target.id === 'volFx') coinSound();
+  });
+  document.getElementById('setM').addEventListener('click', () => openSheet('m'));
+  document.getElementById('setF').addEventListener('click', () => openSheet('f'));
+  document.getElementById('fridgeA').addEventListener('click', () => openSheet('fridge'));
+  document.getElementById('setM2').addEventListener('click', () => openSheet('m2'));
+  document.getElementById('setF2').addEventListener('click', () => openSheet('f2'));
+  document.getElementById('sheetClose').addEventListener('click', closeSheet);
+  sheetWrap.addEventListener('click', e => {
+    if (e.target === sheetWrap) return closeSheet();
+    const b = e.target.closest('button'); if (!b || b.disabled) return;
+    if (b.dataset.replay) { closeSheet(); startTutorial(); return; }
+    if (b.dataset.nick) { askNick(false); return; }
+    if (b.dataset.tab) { if (sheetKind === 'book') bookTab = b.dataset.tab; else shopTab = b.dataset.tab; sheetList.scrollTop = 0; }
+    else if (b.dataset.buy) {
+      const it = ITEMS.find(i => i.id === b.dataset.buy);
+      if (!it || money < it.price) return;
+      if (it.pack) save[it.store] += it.pack;                          // 수건·샴푸는 한 번에 10개씩
+      else if (it.tab === 'food') save.stock[it.id] = left(it.id) + 1; // 음식은 살 때마다 1개씩
+      else if (save.owned[it.id]) return;
+      else { save.owned[it.id] = true; save.stale = 0; }               // 새 탕·장식을 사면 '달라진 것'이에요
+      money -= it.price; keep();
+    }
+    else if (b.dataset.water) {
+      const id = b.dataset.water; if (usedBy(id, sheetKind)) return;
+      if (save.rooms[sheetKind].water !== id) save.stale = 0;
+      save.rooms[sheetKind].water = id;
+      if (id !== 'base') for (const k of ROOM_KEYS) if (k !== sheetKind && isRoom2(k) && save.rooms[k].water === id) {   // 온천방 2가 쓰던 탕을 가져가면 그 방은 그냥 탕으로
+        save.rooms[k].water = 'base'; announce(`${ROOMS[k].name}는 그냥 탕으로 바뀌었어요`);
+      }
+      keep();
+    }
+    else if (b.dataset.deco) { const c = save.rooms[sheetKind]; c[b.dataset.deco] = !c[b.dataset.deco]; save.stale = 0; keep(); }
+    else return;
+    renderSheet();
+  });
+
+  // 물 색 입히기: 물 자리 그림에 색을 채운 판을 만들어 두고 탕 위에 겹쳐요
+  const tintCache = {};
+  function tintLayer(color, maskIndex) {
+    const key = color + maskIndex;
+    if (!tintCache[key]) {
+      const m = assets.water, c = document.createElement('canvas');
+      c.width = m.width; c.height = m.height;
+      const x = c.getContext('2d');
+      x.drawImage(m, 0, 0); x.globalCompositeOperation = 'source-in'; x.fillStyle = color; x.fillRect(0, 0, c.width, c.height);
+      tintCache[key] = c;
+    }
+    return tintCache[key];
+  }
+  // 색 입힌 탕 그림은 한 번 만들어 두고 다시 써요 (매번 색을 입히면 느려져요)
+  const tubCache = new Map();
+  function tubImage(variant, fi, waterId, maskIndex) {
+    const img = assets[variant][fi], w = WATERS[waterId];
+    if (!w.color) return img;
+    const key = variant + fi + waterId;
+    let c = tubCache.get(key);
+    if (!c) {
+      const k = Math.min(1, TUB.w * S / img.width);
+      c = document.createElement('canvas'); c.width = Math.round(img.width * k); c.height = Math.round(img.height * k);
+      const x = c.getContext('2d'), layer = tintLayer(w.color, maskIndex);
+      x.drawImage(img, 0, 0, c.width, c.height);
+      x.globalCompositeOperation = 'color'; x.globalAlpha = .92; x.drawImage(layer, 0, 0, c.width, c.height);
+      x.globalCompositeOperation = 'source-over'; x.globalAlpha = w.wash; x.drawImage(layer, 0, 0, c.width, c.height);
+      if (tubCache.size >= 12) tubCache.delete(tubCache.keys().next().value);
+      tubCache.set(key, c);
+    }
+    return c;
+  }
+  /* ---------- 온천방 아래 칸: 가진 음식을 눌러서 주문한 또덕이에게 줘요 ---------- */
+  const bag = document.getElementById('bag');
+  let currentRoom = null;         // 지금 보고 있는 (열려 있는) 온천방
+  function renderBag() {
+    const foods = ownedFoods();
+    bag.innerHTML = foods.length ? foods.map(i =>
+      `<button data-give="${i.id}" aria-label="${i.name} 주기, ${left(i.id)}개 남음"><img src="${i.pic}" alt=""><span class="n">${left(i.id)}</span></button>`).join('')
+      : '<span class="hint">가진 음식이 없어요.<br>상점에서 사 오세요.</span>';
+  }
+  renderBag();
+  const say2 = (r, text, color) => { r.pop = { text, color, t0: clock() }; };   // 탕 위에 잠깐 뜨는 글씨
+  bag.addEventListener('click', e => {
+    const b = e.target.closest('button'); if (!b || !currentRoom) return;
+    const it = FOODS.find(i => i.id === b.dataset.give), r = ROOMS[currentRoom], now = clock();
+    if (!it || left(it.id) < 1) return;
+    if (!r.order) return say2(r, '주문한 또덕이가 없어요');
+    const who = r.order.who;
+    if (r.order.food.id === it.id) {           // 맞게 줬어요: 1개 쓰고 음식 값을 받아요
+      save.stock[it.id] = left(it.id) - 1; who.fed = true; r.order = null;
+      gain(it.pay, r.at + .5, .47);            // 글씨는 탕 위에 따로 떠요
+      note('foods', it.id); mood(2);
+      say2(r, `냠냠! +${it.pay.toLocaleString('ko-KR')}`);
+      keep(); showMoney(); if (sheetKind) renderSheet();
+    } else {                                   // 잘못 줬어요: 화나서 바로 나가고, 음식 값도 못 받아요
+      say2(r, '이거 아닌데!', '#ff3d28');
+      leaveTub(currentRoom, now, who, true);
+      note('guests', 'huff'); mood(-6); keep(); if (sheetKind) renderSheet();
+    }
+  });
+  const foodImg = {}; for (const i of FOODS) { foodImg[i.id] = new Image(); foodImg[i.id].src = i.pic; }
+  function label(text, x, y, px, color) {      // 흰 테두리가 있는 글씨
+    ctx.font = `700 ${px}px Sehyun, sans-serif`; ctx.textAlign = 'center'; ctx.lineJoin = 'round';
+    ctx.lineWidth = px * .3; ctx.strokeStyle = '#fff'; ctx.strokeText(text, x, y);
+    ctx.fillStyle = color || '#1c1000'; ctx.fillText(text, x, y);
+  }
+  const decoImg = {}; for (const k of ['lantern', 'toy']) { decoImg[k] = new Image(); decoImg[k].src = PIC[k]; }
+
+  let swipe = null, swiped = false;
+  scene.addEventListener('pointerdown', e => { if (sheetKind) return; swipe = {x:e.clientX, y:e.clientY}; swiped = false; });
+  scene.addEventListener('pointerup', e => {
+    if (!swipe) return;
+    const dx = e.clientX - swipe.x, dy = e.clientY - swipe.y; swipe = null;
+    const ax = Math.abs(dx), ay = Math.abs(dy);
+    if (Math.max(ax, ay) < 45) return;
+    if (ax > ay * 1.3) {                     // 옆으로 밀기: 왼쪽으로 밀면 왼쪽 방(남탕 쪽), 오른쪽으로 밀면 오른쪽 방(여탕 쪽)
+      swiped = true; go(view + (dx < 0 ? -1 : 1));
+    }
+  });
+  scene.addEventListener('pointercancel', () => { swipe = null; });
+  scene.addEventListener('click', e => { if (swiped) { swiped = false; e.stopPropagation(); e.preventDefault(); } }, true);
+
+  /* ---------- 할머니 또덕이: 여탕으로 가는 특별 손님. 천천히 걷고, 수건은 안 써요 ---------- */
+  const GRANNY_CHANCE = .15;     // 새 손님이 할머니일 확률
+  const GRANNY_SLOW = 1.35;      // 걷는 데 걸리는 시간 (보통 또덕이의 몇 배)
+  const GRANNY_TUB = { w:.34, h:.2709 };   // 탕 안 그림 크기 (온천탕 그림 안에서의 비율)
+  const GRANNY_SAY = {
+    onsen: ['아이고~ 온천이\n어디니?', '뜨끈한 물에 몸 좀\n담그러 왔단다', '얘야, 온천은\n어느 쪽이니?'],
+    wc:    ['아이고 급해라,\n화장실이 어디니?'],
+    back:  ['이제 온천 가야지.\n어느 쪽이니?'],
+    thanks:['고맙구나~', '착하기도 하지!'],
+    oops:  ['아이고, 거긴\n아닌 것 같은데?'],
+  };
+  // 걷는 그림 고르기: 양머리 수건 > 할머니 > 남자·여자
+  const spriteOf = g => g.towel ? assets.t : g.kind === 'granny' ? assets.g : assets[g.sex];
+  function newGuest(sex, phase, from, now) {
+    return { sex, phase, slot:-1, state:'line', asked:false, born:now, x:from.x, y:from.y, h:from.h, alpha:0, shake:0, happy:false, move:null };
+  }
+  function spawn(now) {
+    let sex = Math.random() < .5 ? 'm' : 'f';
+    if (sex === lastSex && streak >= 2) sex = sex === 'm' ? 'f' : 'm';   // 같은 손님만 계속 나오지 않게
+    streak = sex === lastSex ? streak + 1 : 1; lastSex = sex;
+    const g = newGuest(sex, Math.random() < RESTROOM_CHANCE ? 1 : 2, ENTRANCE, now);
+    if (sex === 'f' && tutAt < 0 && Math.random() < GRANNY_CHANCE * 2) g.kind = 'granny';   // 여자 손님 중에서 뽑아요 (전체의 15%쯤)
+    return g;
+  }
+  function comeBack(r, now) {    // 화장실에서 나와 다시 줄 서기
+    const g = newGuest(r.sex, 2, DOOR[r.side], now); g.back = true; g.kind = r.kind; return g;
+  }
+  // 지금 자리에서 목적지까지 걷기 (ctrl: 휘어 가는 길의 가운데 점)
+  function walkTo(g, to, now, dur, ctrl) {
+    const d = Math.hypot(to.x - g.x, to.y - g.y);
+    g.move = { fx:g.x, fy:g.y, fh:g.h, tx:to.x, ty:to.y, th:to.h, t0:now,
+               dur: (dur || Math.max(650, d * 5500)) * (g.kind === 'granny' ? GRANNY_SLOW : 1),
+               cx: ctrl ? ctrl.x : (g.x + to.x) / 2, cy: ctrl ? ctrl.y : (g.y + to.y) / 2 };
+  }
+
+  function setAsking(on) {
+    btnL.disabled = btnR.disabled = !on;
+    scene.classList.toggle('asking', on);
+  }
+  function say(text) {
+    bubble.textContent = text;
+    bubble.style.whiteSpace = 'pre-line';
+    bubble.classList.add('show');
+  }
+  function hush() { bubble.classList.remove('show'); }
+
+  function choose(side) {
+    const guest = queue[0];
+    if (!guest || !guest.asked || guest.state !== 'line') return;
+    const now = clock();
+    const right = guest.sex === 'm' ? 'left' : 'right';
+    if (side !== right) {            // 틀려도 벌은 없어요
+      guest.shake = now;
+      say(pick(guest.kind === 'granny' ? GRANNY_SAY.oops : OOPS));
+      return;
+    }
+    setAsking(false);
+    tutGuided++;
+    guest.happy = true;
+    guest.state = 'thanks'; guest.t0 = now; guest.side = side;
+    say(pick(guest.kind === 'granny' ? GRANNY_SAY.thanks : guest.phase === 1 ? THANKS_WC : THANKS));
+  }
+  btnL.addEventListener('click', () => choose('left'));
+  btnR.addEventListener('click', () => choose('right'));
+  document.getElementById('doorL').addEventListener('click', () => choose('left'));
+  document.getElementById('doorR').addEventListener('click', () => choose('right'));
+  addEventListener('keydown', e => {
+    if (view !== 0 || viewY !== 0) return;   // 카운터에 있을 때만
+    if (e.key === 'ArrowLeft') choose('left');
+    if (e.key === 'ArrowRight') choose('right');
+  });
+
+  /* ---------- 움직임 ---------- */
+  const ease = t => t < .5 ? 2*t*t : 1 - Math.pow(-2*t + 2, 2) / 2;
+  const lerp = (a, b, t) => a + (b - a) * t;
+  const bez = (a, c, b, t) => (1-t)*(1-t)*a + 2*(1-t)*t*c + t*t*b;
+
+  function update(now) {
+    showPop();
+    for (const [el, dir] of [[hintL, -1], [hintR, 1]]) {    // 가장 급한 주문을 그쪽 가장자리에 보여 줘요
+      let best = null;
+      for (const r of Object.values(ROOMS)) if (r.order && (r.at - view) * dir > 0 && (!best || r.order.t0 < best.order.t0)) best = r;
+      el.hidden = !best || !!sheetKind; if (!best) continue;
+      const left = Math.max(0, 1 - (now - best.order.t0) / ORDER_WAIT), img = el.querySelector('img'), bar = el.querySelector('i');
+      if (img.dataset.id !== best.order.food.id) { img.dataset.id = best.order.food.id; img.src = best.order.food.pic; }
+      bar.style.width = left * 100 + '%'; bar.style.background = left > .5 ? '#5fce5a' : left > .25 ? '#ffb300' : '#ff3d28';
+      el.dataset.at = best.at;
+    }
+    // 새 손님 (화장실에서 나올 차례인 또덕이가 먼저)
+    if (queue.length < LINE.length && now >= nextSpawnAt) {
+      const i = inRestroom.findIndex(r => now >= r.readyAt);
+      queue.push(i >= 0 ? comeBack(inRestroom.splice(i, 1)[0], now) : spawn(now));
+      const pp = popularity() / 100, lo = lerp(GAP_QUIET[0], GAP_BUSY[0], pp), hi = lerp(GAP_QUIET[1], GAP_BUSY[1], pp);
+      nextSpawnAt = now + lo + Math.random() * (hi - lo);   // 손님이 나갔다고 바로 오는 게 아니라, 인기에 따라 와요
+    }
+    // 줄 자리 맞추기: 앞이 비면 한 칸씩 앞으로
+    queue.forEach((g, i) => { if (g.slot !== i) { g.slot = i; walkTo(g, LINE[i], now); } });
+
+    // 걷기
+    for (const g of [...queue, ...leavers]) {
+      g.alpha = Math.min((now - g.born) / 350, 1);
+      const m = g.move; if (!m) continue;
+      const t = Math.min((now - m.t0) / m.dur, 1), e = ease(t);
+      g.x = bez(m.fx, m.cx, m.tx, e); g.y = bez(m.fy, m.cy, m.ty, e); g.h = lerp(m.fh, m.th, e);
+      if (g.state === 'leave' && g.phase !== 2 && t > .86) g.alpha = 1 - (t - .86) / .14;   // 화장실 문이나 입구로 쏙
+      if (t >= 1) g.move = null;
+    }
+
+    // 맨 앞 또덕이
+    const f = queue[0];
+    if (f && !f.move && !f.asked) {
+      f.asked = true;
+      const gs = f.kind === 'granny' ? GRANNY_SAY : null;
+      say(pick(f.phase === 1 ? (gs ? gs.wc : ASK) : f.back ? (gs ? gs.back : ASK_ONSEN_BACK) : (gs ? gs.onsen : ASK_ONSEN))); setAsking(true);
+    }
+    if (f && f.state === 'thanks' && now - f.t0 > 800) {
+      hush(); f.happy = false; f.state = 'leave';
+      queue.shift(); leavers.push(f);
+      const toRestroom = f.phase === 1;                 // 화장실은 문으로, 온천은 화면 옆으로
+      const d = (toRestroom ? DOOR : SIDE)[f.side];
+      if (!toRestroom && f.kind !== 'granny' && save.towels - towelsOnHold <= 0 && Math.random() < TOWEL_CHANCE) f.noTowel = true;   // 수건을 쓰고 싶었는데 없어요
+      if (!toRestroom && f.kind !== 'granny' && save.towels - towelsOnHold > 0 && Math.random() < TOWEL_CHANCE) {   // 수건이 남아 있으면 구경하러
+        towelsOnHold++; f.stop = TOWEL_SPOT[f.side]; walkTo(f, f.stop, now, 1300);
+      }
+      else walkTo(f, d, now, 2400, { x: lerp(f.x, d.x, .45), y: toRestroom ? .40 : .585 });
+    }
+
+    // 다 걸어간 또덕이
+    for (let i = leavers.length - 1; i >= 0; i--) {
+      const g = leavers[i]; if (g.move) continue;
+      if (g.stop) {                                       // 수건 앞에서 잠깐 구경하고, 양머리를 쓰고 가요
+        if (!g.lookT0) g.lookT0 = now;
+        if (now - g.lookT0 < TOWEL_LOOK) continue;
+        g.stop = null; g.towel = true;
+        towelsOnHold--; save.towels = Math.max(0, save.towels - 1);     // 수건 1장을 가져가요
+        if (!save.towels) announce('수건이 다 떨어졌어요!\n상점에서 살 수 있어요');
+        gain(TOWEL_PRICE, g.x, g.y - g.h * .75, '+' + TOWEL_PRICE.toLocaleString('ko-KR'));   // 수건 값
+        keep(); showMoney(); if (sheetKind) renderSheet();
+        walkTo(g, SIDE[g.side], now, 1500);
+        continue;
+      }
+      leavers.splice(i, 1);
+      if (g.phase === 3) continue;                       // 온천을 마치고 집에 간 또덕이
+      if (g.phase === 1) { inRestroom.push({ sex:g.sex, kind:g.kind, side:g.side, readyAt:now + BACK_AFTER }); note('guests', 'wc'); keep(); if (sheetKind) renderSheet(); }
+      else {
+        const room = pickRoom(g.sex), who = { sex:g.sex, kind:g.kind, towel: !!g.towel, noTowel: !!g.noTowel };
+        if (!ROOMS[room].shower) {                                        // 샤워 자리가 비었으면 씻고 들어가요
+          const foam = save.shampoo > 0; if (foam) save.shampoo--;        // 샴푸가 있으면 1번 써요
+          who.noShampoo = !foam; ROOMS[room].shower = { who, t0: now, foam };
+        }
+        else enterTub(room, who, now);                                    // 누가 씻는 중이면 바로 탕으로
+        const fee = PRICE + WATERS[save.rooms[room].water].bonus;      // 입장료 + 물 값
+        note('guests', g.kind || g.sex); if (g.towel) note('guests', 't' + g.sex); note('waters', save.rooms[room].water);   // 도감에 적어요
+        if (++save.stale === STALE_AFTER) announce('손님들이 달라진 게 없대요…\n탕이나 장식을 바꿔 볼까요?');
+        served++; gain(fee, g.side === 'left' ? .17 : .83, .47, '+' + fee.toLocaleString('ko-KR'));
+        keep(); showMoney(); if (sheetKind) renderSheet();
+      }
+    }
+  }
+
+  function drawGuest(g, now) {
+    const frames = spriteOf(g);
+    const walking = !!g.move, wt = walking ? now - g.move.t0 : 0;
+    let img;
+    if (g.happy) img = frames[0];                                   // 눈 감고 웃는 그림
+    else if (walking) img = frames[1 + Math.floor(wt / 125) % 6];
+    else img = frames[1 + Math.floor((now + g.born) / 520) % 2];    // 서서 살짝 꼼지락
+
+    const h = g.h * S * img.height / 380, w = h * img.width / img.height;   // 380 = 보통 또덕이 그림 높이 (키 큰 그림은 그만큼 크게)
+    let x = g.x * S, y = g.y * S;
+    if (walking) y -= Math.abs(Math.sin(wt / 125 * Math.PI)) * h * .025;
+    if (g.happy) y -= Math.abs(Math.sin((now - g.t0) / 400 * Math.PI)) * h * .07;
+    if (g.shake) {
+      const s = (now - g.shake) / 450;
+      if (s < 1) x += Math.sin(s * Math.PI * 6) * (1 - s) * h * .05; else g.shake = 0;
+    }
+    ctx.globalAlpha = Math.max(0, Math.min(1, g.alpha));
+    ctx.drawImage(img, x - w / 2, y - h, w, h);
+    ctx.globalAlpha = 1;
+  }
+  function drawGuests(now) {      // 멀리 있는 또덕이부터 그려서 가까운 또덕이가 앞에 오게
+    for (const g of [...queue, ...leavers].sort((a, b) => a.y - b.y)) drawGuest(g, now);
+  }
+
+  /* ---------- 처음 안내 (튜토리얼): 봐야 할 곳만 밝게 두고 한 단계씩 따라 하게 해요 ---------- */
+  //   target = 밝게 둘 곳, hand = 손가락이 움직이는 방향, done = 이게 참이 되면 다음 단계로, ok = "알겠어요"를 눌러 넘기는 단계
+  const tutEl = document.getElementById('tut'), tutHole = document.getElementById('tutHole'), tutBox = document.getElementById('tutBox');
+  const tutHand = document.getElementById('tutHand'), tutOk = document.getElementById('tutOk');
+  const SET_BTN = { m:'setM', f:'setF', m2:'setM2', f2:'setF2' };
+  const atLobby = () => view === 0 && !viewY;
+  let tutAt = -1, tutGuided = 0, tutSide = -1;
+  const TUT = [
+    { text:'먼저 손님부터 받아 볼까요?\n나비넥타이 또덕이는 왼쪽,\n리본 또덕이는 오른쪽이에요!', target:() => document.querySelector('.guide'), done:() => tutGuided >= 1 },
+    { text:'잘했어요!\n이제 화면을 옆으로 밀어 볼까요?', target:() => scene, hand:'left', done:() => !viewY && view !== 0 },
+    { text:'여기가 온천방이에요.\n♨를 누르면 물 색을 바꾸고\n랜턴과 꽥꽥이를 놓을 수 있어요', target:() => currentRoom && document.getElementById(SET_BTN[currentRoom]), ok:true, done:() => !!ROOMS[sheetKind] },
+    { text:'또덕이가 음식을 시키면\n아래 칸에서 눌러서 주면 돼요.\n이제 반대로 밀어 카운터로 돌아가요', target:() => scene, hand:() => tutSide < 0 ? 'right' : 'left', done:atLobby },
+    { text:'옆으로 계속 밀면 온천방 2와\n맨 끝의 휴게실이 나와요.\n휴게실 쓰레기통이 차면 눌러서 비워 줘요', target:() => scene, ok:true },
+    { text:'여기는 상점이에요.\n수건, 샴푸, 음식, 새 탕을 살 수 있어요', target:() => document.getElementById('shop'), ok:true, done:() => sheetKind === 'shop' },
+    { text:'책은 단골 도감, 말풍선은 손님 리뷰,\n톱니바퀴는 소리 설정이에요.\n준비 끝! 또덕이 온천을 잘 부탁해요', target:() => document.querySelector('.dock'), ok:true },
+  ];
+  function showTutStep() {
+    const st = TUT[tutAt];
+    document.getElementById('tutText').textContent = st.text;
+    tutOk.hidden = !st.ok;
+    const hand = typeof st.hand === 'function' ? st.hand() : st.hand;
+    tutHand.hidden = !hand;
+    if (hand) {
+      const d = { left:[-70, 0, 0], right:[70, 0, 180], up:[0, -70, 90], down:[0, 70, -90] }[hand];
+      tutHand.style.setProperty('--dx', d[0] / 2 + 'px'); tutHand.style.setProperty('--dy', d[1] / 2 + 'px'); tutHand.style.setProperty('--rot', d[2] + 'deg');
+    }
+  }
+  function startTutorial() {
+    closeSheet(); go(0); tutGuided = 0; tutAt = 0; tutEl.hidden = false; showTutStep();
+  }
+  function endTutorial() {
+    tutAt = -1; tutEl.hidden = true;
+    if (!save.tut) { save.tut = true; keep(); }
+  }
+  function nextTutStep() {
+    if (view !== 0) tutSide = view;                      // 어느 쪽 온천방에 갔는지 기억해요 (돌아갈 방향 안내용)
+    if (++tutAt >= TUT.length) endTutorial(); else showTutStep();
+  }
+  document.getElementById('tutSkip').addEventListener('click', endTutorial);
+  tutOk.addEventListener('click', nextTutStep);
+  function tutTick() {            // 매 화면마다: 단계가 끝났는지 보고, 밝은 구멍과 글 상자 자리를 맞춰요
+    if (tutAt < 0) return;
+    const st = TUT[tutAt];
+    if (st.done && st.done()) { nextTutStep(); if (tutAt < 0) return; }
+    const el = TUT[tutAt].target && TUT[tutAt].target(), r = el && el.getBoundingClientRect(), vh = innerHeight, vw = innerWidth;
+    const has = r && r.width > 0 && r.height > 0 && r.right > 0 && r.left < vw, pad = 6;
+    const hs = tutHole.style;
+    if (has) { hs.left = r.left - pad + 'px'; hs.top = r.top - pad + 'px'; hs.width = r.width + pad * 2 + 'px'; hs.height = r.height + pad * 2 + 'px'; }
+    else { hs.left = vw / 2 + 'px'; hs.top = vh / 2 + 'px'; hs.width = '0px'; hs.height = '0px'; }
+    const bh = tutBox.offsetHeight;
+    let top = !has ? (vh - bh) / 2 : vh - r.bottom >= bh + 26 ? r.bottom + 18 : r.top - bh - 18;   // 아래에 자리가 있으면 아래에 (또덕이를 가리지 않게)
+    tutBox.style.top = Math.max(8, Math.min(vh - bh - 8, top)) + 'px';
+    if (!tutHand.hidden) { const s = scene.getBoundingClientRect(); tutHand.style.left = s.left + s.width / 2 + 'px'; tutHand.style.top = s.top + s.height * .5 + 'px'; }
+  }
+  /* ---------- 휴게실: 자동문으로 들어와 미니 냉장고에서 음식을 꺼내 앉아서 먹고, 쓰레기를 버리고 나가요 ---------- */
+  const REST_CHANCE = .8;        // 온천을 마친 또덕이가 휴게실에 들를 확률
+  const EAT_TIME = 9000;         // 앉아서 먹는 시간
+  const SIT_TIME = 6000;         // 냉장고가 비어서 그냥 앉아 쉬는 시간
+  const TRASH_MAX = 5;           // 쓰레기통에 들어가는 양. 하나 모자라게 차면 넘치려고 해요
+  // 자리들 (휴게실 그림 안에서의 비율, 발 위치): 문, 냉장고 앞, 쓰레기통 앞은 벽 쪽 길에 있어요
+  const R_DOOR = {x:.822, y:.606}, R_FRIDGE = {x:.500, y:.606}, R_TRASH = {x:.290, y:.606};
+  const R_SEATS = [{x:.135, y:.745, table:true}, {x:.325, y:.745, table:true}, {x:.560, y:.900, cushion:true}, {x:.800, y:.790}];   // 책상 뒤 왼쪽·오른쪽, 바닥 방석, 통나무 의자
+  const restH = y => lerp(.250, .360, Math.max(0, Math.min(1, (y - .60) / .35)));   // 앞으로 올수록 크게
+  const restGuests = [];         // 휴게실에 있는 또덕이들
+  let doorOpen = 0;              // 자동문이 열린 정도 (0 ~ 1)
+  const restHasRoom = () => restGuests.length < R_SEATS.length && save.trash < TRASH_MAX;
+  const sitImg = v => assets.sit[v.kind === 'granny' ? 'g' : v.towel ? v.sex + 't' : v.sex === 'm' ? 'm' : 'ft'];   // 수건 안 쓴 여자 앉은 그림은 없어서 양머리 그림을 써요
+  function restWalk(v, to, now, next) {
+    const d = Math.hypot(to.x - v.x, to.y - v.y);
+    v.move = { fx:v.x, fy:v.y, tx:to.x, ty:to.y, t0:now, dur: Math.max(500, d * 4200) * (v.kind === 'granny' ? GRANNY_SLOW : 1) };
+    v.state = 'walk'; v.next = next;
+  }
+  function enterRest(w, now) {
+    const seat = R_SEATS.findIndex((_, i) => !restGuests.some(v => v.seat === i));
+    const v = { sex:w.sex, kind:w.kind, towel:w.towel, seat, x:R_DOOR.x, y:R_DOOR.y, born:now, gone:0, food:null };
+    restGuests.push(v); restWalk(v, R_FRIDGE, now, 'take');
+  }
+  function updateRest(now) {
+    let nearDoor = false;
+    for (let i = restGuests.length - 1; i >= 0; i--) {
+      const v = restGuests[i];
+      if (v.state === 'walk') {
+        const m = v.move, t = Math.min((now - m.t0) / m.dur, 1), e = ease(t);
+        v.x = lerp(m.fx, m.tx, e); v.y = lerp(m.fy, m.ty, e);
+        if (t < 1) { if (Math.abs(v.x - R_DOOR.x) < .16 && v.y < .66) nearDoor = true; continue; }
+        v.state = v.next; v.t0 = now;
+        if (v.state === 'gone') { restGuests.splice(i, 1); continue; }
+      }
+      if (v.state === 'take') {                           // 미니 냉장고에서 음식 하나 꺼내기 (있을 때만)
+        if (now - v.t0 < 700) continue;
+        const foods = ownedFoods();
+        if (foods.length) {
+          v.food = pick(foods); save.stock[v.food.id] = left(v.food.id) - 1; note('foods', v.food.id);
+          gain(v.food.pay, restSide() + v.x, v.y - .30, '+' + v.food.pay.toLocaleString('ko-KR'));
+          keep(); showMoney(); if (sheetKind) renderSheet();
+        }
+        restWalk(v, R_SEATS[v.seat], now, 'sit');
+      } else if (v.state === 'sit') {                     // 앉아서 먹기 (음식이 없으면 그냥 쉬기)
+        if (now - v.t0 < (v.food ? EAT_TIME : SIT_TIME)) continue;
+        if (v.food) restWalk(v, R_TRASH, now, 'toss'); else restWalk(v, R_DOOR, now, 'gone');
+      } else if (v.state === 'toss') {                    // 다 먹은 쓰레기 버리기
+        if (now - v.t0 < 450) continue;
+        v.food = null; save.trash++; keep();
+        if (save.trash === TRASH_MAX - 1) announce('휴게실 쓰레기통이 넘치려고 해요!\n눌러서 비워 주세요');
+        restWalk(v, R_DOOR, now, 'gone');
+      }
+    }
+    doorOpen += ((nearDoor ? 1 : 0) - doorOpen) * .12;   // 또덕이가 가까이 오면 자동으로 열려요
+  }
+  function emptyTrash() {
+    if (!save.trash) return announce('쓰레기통이 비어 있어요');
+    save.trash = 0; keep(); announce('쓰레기통을 비웠어요!');
+  }
+  document.getElementById('trashBtn').addEventListener('click', emptyTrash);
+  function drawRest(ox, now) {
+    const u = S, X = v => ox + v * u, Y = v => v * u;
+    ctx.drawImage(restBg(), ox, 0, S, S);
+    ctx.save(); ctx.lineJoin = 'round'; ctx.lineCap = 'round';
+    // 자동문: 유리문 두 짝이 양옆으로 밀려 들어가요
+    ctx.save(); ctx.beginPath(); ctx.rect(X(RDOOR.x), Y(RDOOR.y), RDOOR.w * u, RDOOR.h * u); ctx.clip();
+    const half = RDOOR.w / 2, sl = doorOpen * half * .88;
+    for (const d of [-1, 1]) {
+      const px = d < 0 ? RDOOR.x - sl : RDOOR.x + half + sl;
+      ctx.fillStyle = '#c9f3ea'; ctx.strokeStyle = '#1c1000'; ctx.lineWidth = u * .006;
+      ctx.fillRect(X(px), Y(RDOOR.y), half * u, RDOOR.h * u); ctx.strokeRect(X(px), Y(RDOOR.y), half * u, RDOOR.h * u);
+      ctx.strokeStyle = 'rgba(255,255,255,.9)'; ctx.lineWidth = u * .008;
+      ctx.beginPath(); ctx.moveTo(X(px + half * .22), Y(RDOOR.y + .05)); ctx.lineTo(X(px + half * .52), Y(RDOOR.y + .02)); ctx.moveTo(X(px + half * .22), Y(RDOOR.y + .09)); ctx.lineTo(X(px + half * .72), Y(RDOOR.y + .04)); ctx.stroke();
+      ctx.fillStyle = '#7d8b8f'; ctx.strokeStyle = '#1c1000'; ctx.lineWidth = u * .004;
+      const hx = d < 0 ? px + half - .022 : px + .010;
+      ctx.fillRect(X(hx), Y(RDOOR.y + RDOOR.h * .42), .012 * u, .07 * u); ctx.strokeRect(X(hx), Y(RDOOR.y + RDOOR.h * .42), .012 * u, .07 * u);
+    }
+    ctx.restore();
+    // 쓰레기: 통 위로 쌓여요
+    const n = Math.min(save.trash, TRASH_MAX + 1);
+    for (let i = 0; i < n; i++) {
+      const tx = .112 + (i % 3) * .044 + (i > 2 ? .022 : 0), ty = .345 - (i > 2 ? .040 : 0) - (i > 4 ? .036 : 0);
+      ctx.fillStyle = i % 2 ? '#fff6dc' : '#fff'; ctx.strokeStyle = '#1c1000'; ctx.lineWidth = u * .005;
+      ctx.beginPath(); ctx.arc(X(tx), Y(ty), u * .026, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(X(tx - .012), Y(ty - .004)); ctx.lineTo(X(tx + .004), Y(ty + .008)); ctx.lineTo(X(tx + .013), Y(ty - .008)); ctx.stroke();
+    }
+    ctx.restore();
+    if (save.trash >= TRASH_MAX - 1) {                    // 넘치려고 하면 느낌표가 통통 튀어요
+      const by = .255 - Math.abs(Math.sin(now / 260)) * .025;
+      ctx.fillStyle = '#ff3d28'; ctx.strokeStyle = '#1c1000'; ctx.lineWidth = S * .006;
+      ctx.beginPath(); ctx.arc(X(.155), Y(by), S * .036, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+      label('!', X(.155), Y(by + .020), S * .056, '#fff');
+    }
+    // 또덕이들과 책상: 멀리 있는 순서대로 (책상 뒤에 앉은 또덕이는 책상에 조금 가려져요)
+    const TABLE = { y:.80 };
+    for (const v of [...restGuests, TABLE].sort((a, b) => a.y - b.y)) {
+      if (v === TABLE) { drawTable(ox); continue; }
+      const sitting = v.state === 'sit', atTable = sitting && R_SEATS[v.seat].table;
+      let img, h;
+      if (sitting) { img = sitImg(v); h = .300 * S * img.height / 400; }
+      else { const wt = v.move ? now - v.move.t0 : 0; img = spriteOf(v)[v.state === 'walk' ? 1 + Math.floor(wt / 125) % 6 : 1]; h = restH(v.y) * S * img.height / 380; }
+      const w = h * img.width / img.height, bob = sitting && v.food ? Math.sin((now - v.t0) / 170) * .004 * S : 0;
+      ctx.globalAlpha = Math.min(1, (now - v.born) / 300) * (v.next === 'gone' && v.state === 'walk' ? Math.min(1, (v.move.t0 + v.move.dur - now) / 250) : 1);
+      ctx.drawImage(img, X(v.x) - w / 2, Y(v.y) - h + (sitting ? .035 * S : 0) + bob, w, h);
+      if (v.food && !atTable) {                           // 들고 있는(먹고 있는) 음식
+        const fi = foodImg[v.food.id], fw = .085 * S, fh = fw * 52 / 64;
+        if (fi.complete) ctx.drawImage(fi, X(v.x) + (sitting ? .070 : .050) * S, Y(v.y) - (sitting ? .150 : .180) * S + bob * 2, fw, fh);
+      }
+      ctx.globalAlpha = 1;
+    }
+    for (const v of restGuests) {                         // 책상에 앉은 또덕이의 음식은 책상 위에
+      if (!(v.state === 'sit' && v.food && R_SEATS[v.seat].table)) continue;
+      const fi = foodImg[v.food.id], fw = .085 * S, fh = fw * 52 / 64;
+      if (fi.complete) ctx.drawImage(fi, X(v.x) + .035 * S, Y(.790) - fh, fw, fh);
+    }
+  }
+  function drawTable(ox) {                                // 나무 책상 (낮은 탁자)
+    const u = S, X = v => ox + v * u, INK = '#1c1000';
+    ctx.save(); ctx.lineJoin = ctx.lineCap = 'round'; ctx.strokeStyle = INK; ctx.lineWidth = u * .006;
+    const box = (x, y, w, h, fill) => { ctx.fillStyle = fill; ctx.fillRect(X(x), y * u, w * u, h * u); ctx.strokeRect(X(x), y * u, w * u, h * u); };
+    box(.075, .80, .026, .075, '#8f5522'); box(.365, .80, .026, .075, '#8f5522');                 // 뒷다리
+    box(.030, .835, .034, .105, '#a5642a'); box(.396, .835, .034, .105, '#a5642a');               // 앞다리
+    ctx.beginPath(); ctx.moveTo(X(.060), .722 * u); ctx.lineTo(X(.400), .722 * u); ctx.lineTo(X(.440), .800 * u); ctx.lineTo(X(.020), .800 * u); ctx.closePath();
+    ctx.fillStyle = '#e9a85c'; ctx.fill(); ctx.stroke();
+    ctx.strokeStyle = '#c98744'; ctx.lineWidth = u * .004;
+    for (const t of [.25, .5, .75]) { ctx.beginPath(); ctx.moveTo(X(.060 + .34 * t), .726 * u); ctx.lineTo(X(.020 + .42 * t), .797 * u); ctx.stroke(); }
+    ctx.strokeStyle = INK; ctx.lineWidth = u * .006;
+    box(.020, .800, .420, .040, '#c98744');
+    ctx.restore();
+  }
+  /* 휴게실 배경: 직접 그린 그림 (한 번 그려 두고 다시 써요) */
+  const RDOOR = {x:.665, y:.262, w:.315, h:.328};
+  let restCache = null, restKey = '';
+  const restPic = {}; for (const k of ['trash', 'cushion', 'frame', 'sign']) { restPic[k] = new Image(); restPic[k].src = `img/${k}.png`; }   // 쓰레기통, 방석 그림
+  function restBg() {
+    const key = S + (document.fonts && document.fonts.check('700 20px Sehyun') ? 'f' : '') + (restPic.trash.complete && restPic.trash.naturalWidth ? 't' : '') + (restPic.cushion.complete && restPic.cushion.naturalWidth ? 'c' : '') + (restPic.frame.complete && restPic.frame.naturalWidth ? 'p' : '') + (restPic.sign.complete && restPic.sign.naturalWidth ? 's' : '');
+    if (restCache && restKey === key) return restCache;
+    const cv = restCache = document.createElement('canvas'); restKey = key; cv.width = cv.height = S;
+    const c = cv.getContext('2d'), u = S, INK = '#1c1000';
+    c.lineJoin = c.lineCap = 'round';
+    const box = (x, y, w, h, fill, r = 0, lw = .006) => { c.beginPath(); if (r && c.roundRect) c.roundRect(x * u, y * u, w * u, h * u, r * u); else c.rect(x * u, y * u, w * u, h * u); c.fillStyle = fill; c.fill(); if (lw) { c.strokeStyle = INK; c.lineWidth = lw * u; c.stroke(); } };
+    const oval = (x, y, rx, ry, fill, lw = .006) => { c.beginPath(); c.ellipse(x * u, y * u, rx * u, ry * u, 0, 0, Math.PI * 2); c.fillStyle = fill; c.fill(); if (lw) { c.strokeStyle = INK; c.lineWidth = lw * u; c.stroke(); } };
+    const line = (pts, color = INK, lw = .005) => { c.beginPath(); pts.forEach((p, i) => i ? c.lineTo(p[0] * u, p[1] * u) : c.moveTo(p[0] * u, p[1] * u)); c.strokeStyle = color; c.lineWidth = lw * u; c.stroke(); };
+    const text = (t, x, y, px, color = INK) => { c.font = `700 ${px * u}px Sehyun, sans-serif`; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillStyle = color; c.fillText(t, x * u, y * u); };
+    // 벽: 크림색 벽지 + 아래쪽 나무 판자
+    box(0, 0, 1, .60, '#ffe9c2', 0, 0);
+    for (let i = 0; i < 9; i++) for (let k = 0; k < 4; k++) oval(.06 + i * .115 + (k % 2) * .057, .06 + k * .105, .007, .007, '#ffd9a0', 0);
+    box(0, .47, 1, .13, '#e0a35c', 0, 0); line([[0, .47], [1, .47]], INK, .006);
+    for (let i = 1; i < 12; i++) line([[i / 12, .475], [i / 12, .595]], '#b97a3a', .003);
+    // 바닥: 노란 장판
+    box(0, .595, 1, .405, '#ffc24d', 0, 0); line([[0, .595], [1, .595]], INK, .007);
+    for (const y of [.69, .80, .915]) line([[0, y], [1, y]], '#f0a830', .004);
+    for (let i = 0; i < 7; i++) { const x = .08 + i * .15; line([[x, .595], [x - .02, .69]], '#f0a830', .003); line([[x + .07, .69], [x + .04, .80]], '#f0a830', .003); line([[x, .80], [x - .035, .915]], '#f0a830', .003); line([[x + .08, .915], [x + .05, 1]], '#f0a830', .003); }
+    // 휴게실 나무 간판, 시계, 액자
+    { const w = .25, h = w * restPic.sign.height / restPic.sign.width; c.drawImage(restPic.sign, (.325 - w / 2) * u, .004 * u, w * u, h * u); }   // 휴게실 간판 (받은 그림)
+    oval(.66, .115, .058, .058, '#fff'); line([[.66, .115], [.66, .078]], INK, .006); line([[.66, .115], [.686, .127]], INK, .006); oval(.66, .115, .006, .006, INK, 0);
+    { const w = .205, h = w * restPic.frame.height / restPic.frame.width; c.drawImage(restPic.frame, (.485 - w / 2) * u, (.374 - h) * u, w * u, h * u); }   // 액자 (받은 그림)
+    // 쓰레기통
+    oval(.157, .592, .105, .012, 'rgba(0,0,0,.12)', 0);
+    { const w = .215, h = w * restPic.trash.height / restPic.trash.width; c.drawImage(restPic.trash, (.157 - w / 2) * u, (.597 - h) * u, w * u, h * u); }   // 받은 그림
+    // 미니 냉장고
+    oval(.485, .592, .115, .014, 'rgba(0,0,0,.12)', 0);
+    box(.385, .385, .20, .205, '#fff', .016); line([[.385, .455], [.585, .455]], INK, .005);
+    box(.405, .405, .012, .034, '#9aa7ad', .004, .004); box(.405, .475, .012, .06, '#9aa7ad', .004, .004);
+    oval(.535, .42, .017, .017, '#ffd23e', .004); box(.47, .49, .085, .06, '#ffe9f1', .006, .004); text('음식', .5125, .521, .028, '#e0558a');
+    // 자동문: 문 안쪽 복도와 문틀, 간판 (유리문은 움직이니까 따로 그려요)
+    box(RDOOR.x - .014, RDOOR.y - .014, RDOOR.w + .028, RDOOR.h + .014, '#8a5a2c', .008);
+    box(RDOOR.x, RDOOR.y, RDOOR.w, RDOOR.h, '#6b4a33', 0, .005);
+    box(RDOOR.x, RDOOR.y + RDOOR.h * .72, RDOOR.w, RDOOR.h * .28, '#b98a54', 0, 0); oval(RDOOR.x + RDOOR.w / 2, RDOOR.y + RDOOR.h * .30, .10, .08, 'rgba(255,230,160,.28)', 0);
+    box(.735, .188, .175, .058, '#2f8f83', .012); text('자동문', .8225, .219, .036, '#fff');
+    // 화분
+    box(.612, .525, .042, .065, '#d9734a', .008, .005);
+    for (const [dx, dy, r] of [[-.022, -.035, -.5], [0, -.05, 0], [.022, -.035, .5]]) { c.beginPath(); c.ellipse((.633 + dx) * u, (.525 + dy) * u, .014 * u, .034 * u, r, 0, Math.PI * 2); c.fillStyle = '#5fbf6a'; c.fill(); c.strokeStyle = INK; c.lineWidth = .004 * u; c.stroke(); }
+    // (나무 책상은 또덕이 앞에 와야 해서 drawRest에서 따로 그려요)
+    // 통나무 의자
+    box(.705, .775, .19, .105, '#c98744', .02); oval(.80, .775, .095, .032, '#f3c98b'); oval(.80, .775, .055, .018, '#f3c98b', .003); oval(.80, .775, .022, .007, '#f3c98b', .003);
+    line([[.735, .82], [.735, .86]], '#a5642a', .004); line([[.86, .815], [.86, .85]], '#a5642a', .004);
+    // 방석
+    oval(.56, .945, .115, .016, 'rgba(0,0,0,.10)', 0);
+    { const w = .25, h = w * restPic.cushion.height / restPic.cushion.width; c.drawImage(restPic.cushion, (.56 - w / 2) * u, (.892 - h / 2) * u, w * u, h * u); }   // 받은 그림
+    return cv;
+  }
+  const hintL = document.getElementById('hintL'), hintR = document.getElementById('hintR');
+  for (const el of [hintL, hintR]) el.addEventListener('click', () => go(+el.dataset.at));   // 누르면 그 방으로 바로 가요
+  let barMode = 'lobby';
+  /* 게임 시계: 상점·도감·리뷰·설정 같은 창이 열려 있는 동안에는 멈춰요 */
+  let pausedMs = 0, lastReal = performance.now();
+  /* 닉네임: 시작할 때 꼭 정해요 (설정에서 바꿀 수 있어요) */
+  let nickOpen = false, nickFirst = false;
+  const nickEl = document.getElementById('nick'), nickInput = document.getElementById('nickInput'), nickErr = document.getElementById('nickErr');
+  function askNick(first) {
+    nickOpen = true; nickFirst = first; nickEl.hidden = false; nickErr.textContent = '';
+    nickInput.value = save.nick; document.getElementById('nickOk').textContent = first ? '시작하기' : '바꾸기';
+    setTimeout(() => nickInput.focus(), 50);
+  }
+  document.getElementById('nickForm').addEventListener('submit', e => {
+    e.preventDefault();
+    const name = nickInput.value.trim();
+    if (!name) { nickErr.textContent = '닉네임을 한 글자 이상 써 주세요'; nickInput.focus(); return; }
+    save.nick = name; keep(); nickOpen = false; nickEl.hidden = true; nickInput.blur();
+    announce(nickFirst ? `${name} 사장님, 어서 오세요!` : `닉네임을 ${name}(으)로 바꿨어요`);
+    if (sheetKind === 'settings') { sheetList.dataset.kind = ''; renderSheet(); }
+    if (nickFirst && !save.tut) startTutorial();
+  });
+  function clock() {
+    const real = performance.now();
+    if (sheetKind || nickOpen) pausedMs += real - lastReal;
+    lastReal = real; return real - pausedMs;
+  }
+  function tick(now) {
+    now = clock();
+    update(now);
+    tutTick();
+    cam += (view - cam) * .16; if (Math.abs(view - cam) < .001) cam = view;
+    const key = viewY ? null : ROOM_AT[view], open = !!key && !ROOMS[key].ui.classList.contains('is-locked');
+    const mode = open ? key : view === 0 && !viewY ? 'lobby' : 'away';
+    if (mode !== barMode) {                  // 아래 칸: 카운터 = 안내 버튼, 온천방 = 가진 음식, 그 밖 = 빈칸
+      barMode = mode; currentRoom = open ? key : null;
+      ambience(open);
+      document.getElementById('controls').className = 'controls' + (open ? ' onsen' : mode === 'away' ? ' away' : '');
+    }
+    const want = currentRoom && ROOMS[currentRoom].order ? ROOMS[currentRoom].order.food : null;
+    if ((want ? want.id : '') !== (bag.dataset.order || '')) {   // 화면을 못 보는 사람에게도 주문을 알려요
+      bag.dataset.order = want ? want.id : '';
+      bag.setAttribute('aria-label', want ? `가진 음식. 또덕이가 ${want.name}을(를) 시켰어요` : '가진 음식');
+    }
+    camY += (viewY - camY) * .16; if (Math.abs(viewY - camY) < .001) camY = viewY;
+    const place = (el, x, y) => {             // 방마다 버튼 판을 그 방 자리에 맞춰요
+      const dx = x - cam, dy = y - camY;
+      const t = `translate(${dx * 100}%, ${dy * 100}%)`;
+      if (el._t === t) return;               // 안 움직였으면 그대로 둬요
+      el._t = t; el.style.transform = t;
+      el.style.visibility = Math.abs(dx) < .999 && Math.abs(dy) < .999 ? 'visible' : 'hidden';
+    };
+    place(lobbyUi, 0, 0); place(restUi, restSide(), 0);
+    for (const r of Object.values(ROOMS)) place(r.ui, r.at, 0);
+
+    updateRest(now);
+    if (Math.abs(restSide() - cam) < .999) drawRest((restSide() - cam) * S, now);   // 휴게실 (맨 끝 방)
+    ctx.save(); ctx.translate(0, -camY * S);  // 1층 방들
+    for (const [key, r] of Object.entries(ROOMS)) {
+      while (r.soaking.length && r.soaking[0].until <= now) leaveTub(key, now);
+      if (r.shower && now - r.shower.t0 >= SHOWER_TIME) {  // 다 씻었으면 탕으로 (샴푸를 썼으면 샴푸 값도 받아요)
+        if (r.shower.foam) {
+          gain(SHAMPOO_PRICE, r.at + .16, .60, '+' + SHAMPOO_PRICE.toLocaleString('ko-KR'));
+          if (!save.shampoo) announce('샴푸가 다 떨어졌어요!\n상점에서 살 수 있어요');
+          keep(); if (sheetKind) renderSheet();
+        }
+        enterTub(key, r.shower.who, now); r.shower = null;
+      }
+      if (r.order && now - r.order.t0 > ORDER_WAIT) {      // 시간 안에 안 주면 포기해요
+        const w = r.order.who; w.late = true; r.order = null; mood(-3); say2(r, '너무 늦어…', '#ff3d28');
+        leaveTub(key, now, w, true); note('guests', 'huff'); keep();
+      }
+      if (!r.order) {                                      // 음식 주문은 방마다 한 번에 한 마리만 (사 둔 음식이 없어도 시켜요)
+        const who = r.soaking.find(s => s.slot >= 0 && s.orderAt && now >= s.orderAt);
+        if (who) { who.orderAt = 0; r.order = { who, food: pick(FOODS), t0: now }; }
+      }
+      for (let i = r.walkers.length - 1; i >= 0; i--) {    // 방을 다 걸어 나가면 카운터를 지나 입구로
+        const w = r.walkers[i]; if (now - w.t0 < WALK_OUT) continue;
+        r.walkers.splice(i, 1);
+        if (!w.huff && restHasRoom() && Math.random() < REST_CHANCE) { enterRest(w, now); continue; }   // 휴게실에 들렀다 가요
+        const side = r.at < 0 ? 'left' : 'right', g = newGuest(w.sex, 3, SIDE[side], now);
+        g.towel = w.towel; g.kind = w.kind;
+        g.state = 'leave'; g.slot = 0;
+        walkTo(g, ENTRANCE, now, 3200, { x: lerp(SIDE[side].x, ENTRANCE.x, .55), y:.58 });
+        leavers.push(g);
+      }
+      if (Math.abs(r.at - cam) >= .999 || camY <= -.999) continue;   // 화면에 안 보이는 방
+      const ox = (r.at - cam) * S, n = r.soaking.length, fi = Math.floor(now / 250) % 5, cfg = save.rooms[key];
+      ctx.drawImage(assets.onsenBg, ox, 0, S, S);
+      const tx = ox + TUB.x * S, ty = TUB.y * S, tw = TUB.w * S, th = TUB.h * S;
+      ctx.drawImage(tubImage('tubEmpty', fi, cfg.water, 0), tx, ty, tw, th);
+      if (cfg.lantern && decoImg.lantern.complete) {       // 랜턴: 탕 위쪽 가운데 돌 위 (또덕이보다 먼저 그려서 또덕이 뒤에 서 있게)
+        const lh = .185 * th, lw = lh * 60 / 96, lx = tx + .528 * tw - lw / 2, ly = ty + .285 * th - lh;
+        const gx = lx + lw / 2, gy = ly + lh * .4, gr = lh * (.95 + Math.sin(now / 300) * .03);
+        const glow = ctx.createRadialGradient(gx, gy, 0, gx, gy, gr);
+        glow.addColorStop(0, 'rgba(255,236,150,.75)'); glow.addColorStop(1, 'rgba(255,236,150,0)');
+        ctx.fillStyle = glow; ctx.fillRect(gx - gr, gy - gr, gr * 2, gr * 2);
+        ctx.drawImage(decoImg.lantern, lx, ly, lw, lh);
+      }
+      const tw_ = r.towel, towelImg = assets[tw_.img];
+      for (let i = 0; i < r.slots.length; i++) {           // 뒤쪽 자리부터 그려요
+        const who = r.soaking.find(d => d.slot === i); if (!who) continue;
+        const e = r.slots[i];
+        if (who.towel) ctx.drawImage(towelImg, tx + (e.x + tw_.dx) * tw, ty + e.y * th, tw_.w * tw, tw_.h * th);
+        else if (who.kind === 'granny') ctx.drawImage(assets.gtub, tx + (e.x + (r.w - GRANNY_TUB.w) / 2) * tw, ty + (e.y + .02) * th, GRANNY_TUB.w * tw, GRANNY_TUB.h * th);
+        else ctx.drawImage(assets[r.duck], tx + e.x * tw, ty + e.y * th, r.w * tw, r.h * th);
+      }
+      if (cfg.toy && decoImg.toy.complete) {               // 꽥꽥이: 물 위에서 둥실둥실
+        const dw = .145 * tw, dh = dw * 52 / 64, bob = Math.sin(now / 520) * .006 * th, t = moveToy(r, now);
+        ctx.save(); ctx.translate(tx + t.x * tw, ty + t.y * th + bob); ctx.rotate(Math.sin(now / 900) * .07); ctx.scale(t.dir, 1);
+        ctx.drawImage(decoImg.toy, -dw / 2, -dh / 2, dw, dh); ctx.restore();
+      }
+      if (r.soaking.length > TUB_SHOW) label(`탕 안 ${r.soaking.length}명`, ox + .70 * S, .335 * S, S * .042, '#1c1000');   // 안 보이는 또덕이까지 센 수
+      drawShower(ox, now, 'base');
+      if (r.shower) {                                      // 의자에 앉아 머리 감는 또덕이
+        const wt = now - r.shower.t0, img = assets.wash[Math.floor(wt / (1000 / WASH.fps)) % assets.wash.length];
+        const ww = STOOL.w * WASH.w * S, wh = ww * WASH.ratio;
+        ctx.globalAlpha = Math.min(wt / 250, 1, (SHOWER_TIME - wt) / 200);
+        ctx.drawImage(assets.stool, ox + STOOL.x * S - STOOL.w * S / 2, STOOL.bottom * S - STOOL.w * S * assets.stool.height / assets.stool.width, STOOL.w * S, STOOL.w * S * assets.stool.height / assets.stool.width);
+        ctx.drawImage(img, ox + STOOL.x * S - ww / 2, STOOL.bottom * S - wh * WASH.by, ww, wh);
+        ctx.globalAlpha = 1;
+      }
+      drawShower(ox, now, 'water', !!r.shower);
+      if (save.shampoo > 0) {                              // 샴푸 통 (남아 있을 때만 의자 옆에 놓여요)
+        const u = S, bx = ox + .252 * u, by = .972 * u;
+        ctx.save(); ctx.lineJoin = 'round'; ctx.lineCap = 'round'; ctx.strokeStyle = '#1c1000'; ctx.lineWidth = u * .005;
+        ctx.fillStyle = '#ff9ec4'; ctx.beginPath(); ctx.roundRect ? ctx.roundRect(bx - .020 * u, by - .070 * u, .040 * u, .070 * u, .008 * u) : ctx.rect(bx - .020 * u, by - .070 * u, .040 * u, .070 * u); ctx.fill(); ctx.stroke();
+        ctx.fillStyle = '#fff'; ctx.fillRect(bx - .012 * u, by - .052 * u, .024 * u, .026 * u); ctx.strokeRect(bx - .012 * u, by - .052 * u, .024 * u, .026 * u);
+        ctx.fillStyle = '#dfe6ea'; ctx.fillRect(bx - .008 * u, by - .086 * u, .016 * u, .016 * u); ctx.strokeRect(bx - .008 * u, by - .086 * u, .016 * u, .016 * u);
+        ctx.beginPath(); ctx.moveTo(bx, by - .086 * u); ctx.lineTo(bx, by - .104 * u); ctx.lineTo(bx - .020 * u, by - .104 * u); ctx.stroke();
+        ctx.restore();
+      }
+      if (r.shower && r.shower.foam) {                     // 샴푸 거품: 머리 위에서 뽀글뽀글
+        const u = S, wt = now - r.shower.t0;
+        ctx.save(); ctx.fillStyle = 'rgba(255,255,255,.95)'; ctx.strokeStyle = 'rgba(28,16,0,.55)'; ctx.lineWidth = u * .003;
+        for (let i = 0; i < 9; i++) {
+          const ph = wt / 520 + i * 1.7, rise = (ph % 1);
+          const x = ox + (.135 + Math.sin(i * 2.4) * .062 + Math.sin(ph * 2) * .006) * u, y = (.690 - rise * .075 + Math.cos(i * 1.3) * .018) * u;
+          ctx.globalAlpha = Math.min(1, wt / 400) * (1 - rise * .7);
+          ctx.beginPath(); ctx.arc(x, y, (.012 + (i % 3) * .005) * u, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+        }
+        ctx.restore();
+      }
+      for (const w of r.walkers) {                         // 탕에서 나와 걸어가는 또덕이
+        const wt = now - w.t0, t = Math.min(wt / WALK_OUT, 1);
+        const img = spriteOf(w)[1 + Math.floor(wt / 125) % 6];
+        const h = w.h * S * img.height / 380, ww = h * img.width / img.height;
+        const x = ox + lerp(w.fx, w.tx, t) * S, y = w.y * S - Math.abs(Math.sin(wt / 125 * Math.PI)) * h * .025;
+        ctx.globalAlpha = Math.min(wt / 300, 1);
+        ctx.drawImage(img, x - ww / 2, y - h, ww, h);
+        ctx.globalAlpha = 1;
+        if (w.huff) label('흥!', x, y - h * 1.02, S * .05, '#ff3d28');
+      }
+      if (r.order) {                                       // 음식을 시킨 또덕이 머리 위 말풍선
+        const at = r.slots[r.order.who.slot];
+        const bw = .26 * tw, bh = bw * 547 / 760, bob = Math.sin(now / 400) * .004 * S;
+        let tipX = tx + (at.x + r.w * .30) * tw; const tipY = ty + (at.y + r.h * .10) * th + bob;
+        const flip = tipX - .987 * bw < ox + .01 * S;      // 왼쪽으로 넘치면 뒤집어서 오른쪽에
+        if (flip) tipX = tx + (at.x + r.w * .70) * tw;
+        ctx.save(); ctx.translate(tipX, tipY); if (flip) ctx.scale(-1, 1);
+        ctx.drawImage(assets.bubbleImg, -.987 * bw, -.886 * bh, bw, bh);
+        const pic_ = foodImg[r.order.food.id], iw = .50 * bw, ih = iw * 52 / 64;
+        if (pic_.complete) ctx.drawImage(pic_, -.987 * bw + .44 * bw - iw / 2, -.886 * bh + .47 * bh - ih / 2, iw, ih);
+        ctx.restore();
+        // 기다려 주는 시간 게이지: 다 떨어지면 나가 버려요
+        const leftT = Math.max(0, 1 - (now - r.order.t0) / ORDER_WAIT), gx = tipX + (flip ? .987 - .44 - .31 : -.987 + .44 - .31) * bw, gy = tipY - .886 * bh - .045 * bw, gw = .62 * bw, gh = .075 * bw;
+        ctx.fillStyle = '#fff'; ctx.strokeStyle = '#1c1000'; ctx.lineWidth = S * .005;
+        ctx.fillRect(gx, gy, gw, gh); ctx.fillStyle = leftT > .5 ? '#5fce5a' : leftT > .25 ? '#ffb300' : '#ff3d28'; ctx.fillRect(gx, gy, gw * leftT, gh); ctx.strokeRect(gx, gy, gw, gh);
+      }
+      if (r.pop) {                                         // "냠냠!" 같은 글씨가 잠깐 떠올라요
+        const t = (now - r.pop.t0) / 1400;
+        if (t >= 1) r.pop = null;
+        else { ctx.globalAlpha = Math.min(1, (1 - t) * 2.5); label(r.pop.text, ox + .5 * S, (.50 - t * .05) * S, S * .058, r.pop.color); ctx.globalAlpha = 1; }
+      }
+    }
+    if (Math.abs(cam) < .999 && camY > -.999) {   // 카운터
+      const ox = -cam * S;
+      ctx.save(); ctx.beginPath(); ctx.rect(ox, 0, S, S); ctx.clip(); ctx.translate(ox, 0);
+      ctx.drawImage(assets.bg[Math.floor(now / 200) % 5], 0, 0, S, S);
+      drawGuests(now);
+      ctx.drawImage(assets.front, 0, S * .52, S, S * .48);          // 카운터는 손님 앞에
+      if (save.towels > 0) ctx.drawImage(assets.towels, 0, S * .52, S, S * .48);   // 수건이 남아 있을 때만
+      ctx.restore();
+    }
+    ctx.restore();
+    requestAnimationFrame(tick);
+  }
+})();
+</script>
+</body>
+</html>
