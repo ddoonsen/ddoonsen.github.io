@@ -79,6 +79,13 @@
   .empty{font-size:3.8cqw; text-align:center; padding:6cqw 2cqw; opacity:.75}
   .ohint{position:absolute; top:40%; z-index:3; width:17cqw; padding:1.6cqw 1.6cqw 1.4cqw; background:#fff; border:.6cqw solid var(--ink); cursor:pointer; display:grid; gap:.8cqw; justify-items:center; animation:hintBob .9s ease-in-out infinite alternate}
   .ohint[hidden]{display:none}
+  /* 옆방으로 가는 화살표 (밀지 않고 눌러서도 갈 수 있어요) */
+  .nav{position:absolute; top:31%; z-index:3; width:8.4cqw; height:8.4cqw; padding:0; display:grid; place-items:center; cursor:pointer; background:rgba(255,255,255,.88); border:.55cqw solid var(--ink); border-radius:50%; box-shadow:0 .6cqw 0 var(--ink)}
+  .nav.left{left:1.5cqw} .nav.right{right:1.5cqw}
+  .nav[hidden]{display:none}
+  .nav svg{width:58%; height:58%; display:block}
+  .nav:active{transform:translateY(.4cqw); box-shadow:0 .2cqw 0 var(--ink)}
+  .nav:focus-visible{outline:.7cqw solid var(--red); outline-offset:.3cqw}
   .ohint.left{left:1.5cqw; border-radius:5cqw 5cqw 5cqw 1cqw} .ohint.right{right:1.5cqw; border-radius:5cqw 5cqw 1cqw 5cqw}
   .ohint img{width:11cqw; height:9cqw; object-fit:contain}
   .ohint span{width:100%; height:1.8cqw; border:.4cqw solid var(--ink); border-radius:1cqw; background:#fff; overflow:hidden; display:block}
@@ -349,6 +356,8 @@
       <button class="hot" id="fridgeA" style="left:38%;top:37.5%;width:20.5%;height:22%" aria-label="미니 냉장고 열기"></button>
       <button class="hot" id="trashBtn" style="left:5%;top:27%;width:20%;height:33%" aria-label="쓰레기통 비우기"></button>
     </div>
+    <button class="nav left" id="navL" aria-label="왼쪽 방으로 가기"><svg viewBox="0 0 24 24" fill="none" stroke="#1c1000" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 4l-8 8 8 8"/></svg></button>
+    <button class="nav right" id="navR" aria-label="오른쪽 방으로 가기"><svg viewBox="0 0 24 24" fill="none" stroke="#1c1000" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 4l8 8-8 8"/></svg></button>
     <button class="ohint left" id="hintL" hidden aria-label="왼쪽 방에서 음식 주문"><img alt=""><span><i></i></span></button>
     <button class="ohint right" id="hintR" hidden aria-label="오른쪽 방에서 음식 주문"><img alt=""><span><i></i></span></button>
     <div class="banner" id="banner" role="status"></div>
@@ -1476,9 +1485,9 @@
   let tutAt = -1, tutGuided = 0, tutSide = -1;
   const TUT = [
     { text:'먼저 손님부터 받아 볼까요?\n나비넥타이 또덕이는 왼쪽,\n리본 또덕이는 오른쪽이에요!', target:() => document.querySelector('.guide'), done:() => tutGuided >= 1 },
-    { text:'잘했어요!\n이제 화면을 옆으로 밀어 볼까요?', target:() => scene, hand:'left', done:() => !viewY && view !== 0 },
+    { text:'잘했어요!\n이제 화면을 옆으로 밀거나\n양옆 화살표를 눌러 볼까요?', target:() => scene, hand:'left', done:() => !viewY && view !== 0 },
     { text:'여기가 온천방이에요.\n♨를 누르면 물 색을 바꾸고\n랜턴과 꽥꽥이를 놓을 수 있어요', target:() => currentRoom && document.getElementById(SET_BTN[currentRoom]), ok:true, done:() => !!ROOMS[sheetKind] },
-    { text:'또덕이가 음식을 시키면\n아래 칸에서 눌러서 주면 돼요.\n이제 반대로 밀어 카운터로 돌아가요', target:() => scene, hand:() => tutSide < 0 ? 'right' : 'left', done:atLobby },
+    { text:'또덕이가 음식을 시키면\n아래 칸에서 눌러서 주면 돼요.\n이제 반대쪽으로 카운터에 돌아가요', target:() => scene, hand:() => tutSide < 0 ? 'right' : 'left', done:atLobby },
     { text:'옆으로 계속 밀면 온천방 2와\n맨 끝의 휴게실이 나와요.\n휴게실 쓰레기통이 차면 눌러서 비워 줘요', target:() => scene, ok:true },
     { text:'여기는 상점이에요.\n수건, 샴푸, 음식, 새 탕을 살 수 있어요', target:() => document.getElementById('shop'), ok:true, done:() => sheetKind === 'shop' },
     { text:'책은 단골 도감, 말풍선은 손님 리뷰,\n트로피는 랭킹, 톱니바퀴는 설정이에요.\n준비 끝! 또덕이 온천을 잘 부탁해요', target:() => document.querySelector('.dock'), ok:true },
@@ -1705,6 +1714,9 @@
   }
   const hintL = document.getElementById('hintL'), hintR = document.getElementById('hintR');
   for (const el of [hintL, hintR]) el.addEventListener('click', () => go(+el.dataset.at));   // 누르면 그 방으로 바로 가요
+  const navL = document.getElementById('navL'), navR = document.getElementById('navR');
+  navL.addEventListener('click', () => go(view - 1));     // 화살표: 한 칸 옆방으로 (맨 끝 방에서는 숨겨요)
+  navR.addEventListener('click', () => go(view + 1));
   let barMode = 'lobby';
   /* 게임 시계: 상점·도감·리뷰·설정 같은 창이 열려 있는 동안에는 멈춰요 */
   let pausedMs = 0, lastReal = performance.now();
@@ -1735,6 +1747,7 @@
     now = clock();
     update(now);
     tutTick();
+    navL.hidden = view <= -REST_AT; navR.hidden = view >= REST_AT;
     cam += (view - cam) * .16; if (Math.abs(view - cam) < .001) cam = view;
     const key = viewY ? null : ROOM_AT[view], open = !!key && !ROOMS[key].ui.classList.contains('is-locked');
     const mode = open ? key : view === 0 && !viewY ? 'lobby' : 'away';
