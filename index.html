@@ -224,7 +224,16 @@
     background:#fff; border:4px solid var(--ink); border-radius:18px; box-shadow:0 5px 0 var(--ink);
   }
   .dockbtn svg{width:100%; height:100%; display:block}
-  .dockbtn{position:relative} .dock{gap:10px}
+  .dockbtn{position:relative; flex:0 1 64px; width:auto; height:auto; aspect-ratio:1; min-width:0} .dock{gap:10px}
+  /* 랭킹 */
+  .rankrow{display:grid; grid-template-columns:9cqw 1fr auto; gap:2cqw; align-items:center; border:.45cqw solid var(--ink); border-radius:2.6cqw; padding:1.4cqw 2.2cqw; background:#fffdf0; font-size:4cqw}
+  .rankrow.me{background:#ffe9a8}
+  .rankrow .no{font-weight:700; text-align:center; font-variant-numeric:tabular-nums}
+  .rankrow .top{font-size:5.4cqw}
+  .rankrow .who{font-weight:700; overflow-wrap:anywhere; min-width:0}
+  .rankrow .who small{font-size:3.2cqw; font-weight:400; opacity:.75; margin-left:1cqw}
+  .rankrow .n{text-align:right; font-size:3.5cqw; line-height:1.25; font-variant-numeric:tabular-nums}
+  .rankrow .n b{display:block; font-size:4cqw}
   .dockbtn .dot{position:absolute; top:-7px; right:-7px; width:18px; height:18px; border-radius:50%; background:var(--red, #ff3d28); border:3px solid var(--ink)}
   .dockbtn .dot[hidden]{display:none}
   .review{border:.45cqw solid var(--ink); border-radius:2.6cqw; padding:1.6cqw 2cqw; background:#fffdf0; display:grid; grid-template-columns:11cqw 1fr; gap:2cqw; align-items:center}
@@ -381,6 +390,15 @@
         <path d="M24 13.500l2.500 5.200 5.700.700-4.200 4 1.100 5.600-5.100-2.800-5.100 2.800 1.100-5.600-4.200-4 5.700-.700z" fill="#ffd93b" stroke-width="2"/>
       </svg>
       <span class="dot" id="reviewDot" hidden></span>
+    </button>
+    <button class="dockbtn" id="rank" aria-label="랭킹">
+      <svg viewBox="0 0 48 48" fill="none" stroke="#1c1000" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round" aria-hidden="true">
+        <path d="M14 11H6c0 8 3 12 9 13M34 11h8c0 8-3 12-9 13"/>
+        <path d="M13 7h22v11c0 8-5 13-11 13s-11-5-11-13z" fill="#ffd93b"/>
+        <path d="M24 31v6" stroke-width="5"/>
+        <path d="M15 42c0-3 3-5 9-5s9 2 9 5z" fill="#ffd93b"/>
+        <path d="M24 12.500l1.800 3.600 4 .500-2.900 2.800.7 3.900-3.600-1.900-3.600 1.900.7-3.900-2.900-2.800 4-.500z" fill="#fff" stroke-width="1.600"/>
+      </svg>
     </button>
     <button class="dockbtn" id="gear" aria-label="설정">
       <svg viewBox="0 0 48 48" fill="none" stroke="#1c1000" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round" aria-hidden="true">
@@ -764,7 +782,7 @@
   const SAVE_KEY = 'ttodeok-onsen-v1';
   const newRoom = () => ({ water:'base', lantern:false, toy:false });
   const ROOM_KEYS = Object.keys(ROOMS);
-  const save = { nick:'', owned:{}, stock:{}, towels:TOWEL_PACK, shampoo:0, trash:0, mood:0, stale:0, reviews:[], unread:0, vol:{ fx:.7, amb:.5, bgm:.45 }, tut:false, book:{ guests:{}, foods:{}, waters:{} }, rooms:Object.fromEntries(ROOM_KEYS.map(k => [k, newRoom()])) };
+  const save = { nick:'', uid:'', owned:{}, stock:{}, towels:TOWEL_PACK, shampoo:0, trash:0, mood:0, stale:0, reviews:[], unread:0, vol:{ fx:.7, amb:.5, bgm:.45 }, tut:false, book:{ guests:{}, foods:{}, waters:{} }, rooms:Object.fromEntries(ROOM_KEYS.map(k => [k, newRoom()])) };
   try {
     const old = JSON.parse(localStorage.getItem(SAVE_KEY) || 'null');
     if (old) {
@@ -774,6 +792,7 @@
       if (typeof old.towels === 'number') save.towels = Math.max(0, old.towels);
       if (typeof old.shampoo === 'number') save.shampoo = Math.max(0, old.shampoo);
       if (typeof old.nick === 'string') save.nick = old.nick.trim();
+      if (typeof old.uid === 'string' && /^[A-Za-z0-9]{16,40}$/.test(old.uid)) save.uid = old.uid;
       if (typeof old.trash === 'number') save.trash = Math.max(0, old.trash);
       if (typeof old.stale === 'number') save.stale = Math.max(0, old.stale);
       if (Array.isArray(old.reviews)) save.reviews = old.reviews.filter(v => v && v.s >= 1 && v.s <= 5 && typeof v.t === 'string').slice(0, 30);
@@ -790,9 +809,41 @@
       for (const k of ['m2', 'f2']) if (save.rooms[k].water !== 'base' && ROOM_KEYS.some(o => o !== k && save.rooms[o].water === save.rooms[k].water)) save.rooms[k].water = 'base';
     }
   } catch (e) {}
+  // 랭킹에서 나를 알아보는 번호: 로그인 대신 이 기기에 한 번 만들어 저장해 둬요
+  if (!save.uid) save.uid = Array.from(crypto.getRandomValues(new Uint8Array(20)), b => 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'[b % 62]).join('');
+  try { const o = JSON.parse(localStorage.getItem(SAVE_KEY) || '{}'); if (o.uid !== save.uid) { o.uid = save.uid; localStorage.setItem(SAVE_KEY, JSON.stringify(o)); } } catch (e) {}   // 만들자마자 적어 둬요
   function keep() {
     renderBag();
-    try { localStorage.setItem(SAVE_KEY, JSON.stringify({ nick:save.nick, money, served, owned:save.owned, stock:save.stock, towels:save.towels, shampoo:save.shampoo, trash:save.trash, mood:save.mood, stale:save.stale, reviews:save.reviews, unread:save.unread, vol:save.vol, tut:save.tut, book:save.book, rooms:save.rooms })); } catch (e) {}
+    try { localStorage.setItem(SAVE_KEY, JSON.stringify({ nick:save.nick, uid:save.uid, money, served, owned:save.owned, stock:save.stock, towels:save.towels, shampoo:save.shampoo, trash:save.trash, mood:save.mood, stale:save.stale, reviews:save.reviews, unread:save.unread, vol:save.vol, tut:save.tut, book:save.book, rooms:save.rooms })); } catch (e) {}
+  }
+  /* ---------- 랭킹: 로그인 없이, 맞이한 손님 수로 겨뤄요 ---------- */
+  // Firebase Realtime Database 주소를 넣으면 켜져요 (끝에 / 없이). 만드는 법은 RANKING.md
+  const RANK_URL = '';
+  const RANK_TOP = 50, RANK_EVERY = 60000;       // 보여 줄 등수, 내 기록을 올리는 간격(ms)
+  const rank = { rows:null, state:'', sentServed:-1, sentNick:'', sentAt:-RANK_EVERY };
+  const rankNick = () => Array.from(save.nick).slice(0, 12).join('');
+  function rankSend(now) {                        // 내 기록 올리기 (바뀐 게 있을 때만)
+    const n = rankNick(), s = served;
+    if (!RANK_URL || !n || s < 1 || (s === rank.sentServed && n === rank.sentNick)) return Promise.resolve();
+    if (!now && performance.now() - rank.sentAt < RANK_EVERY) return Promise.resolve();
+    rank.sentAt = performance.now();
+    return fetch(`${RANK_URL}/rank/${save.uid}.json`, { method:'PUT', keepalive:true, headers:{ 'Content-Type':'application/json' }, body:JSON.stringify({ nick:n, served:s, at:{ '.sv':'timestamp' } }) })
+      .then(r => { if (r.ok) { rank.sentServed = s; rank.sentNick = n; } }).catch(() => {});
+  }
+  function rankLoad() {                           // 내 기록을 올린 다음 순위표를 받아 와요
+    if (!RANK_URL || rank.state === 'loading') return;
+    rank.state = 'loading';
+    rankSend(true).then(() => fetch(`${RANK_URL}/rank.json?orderBy=%22served%22&limitToLast=${RANK_TOP}`))
+      .then(r => r.ok ? r.json() : Promise.reject()).then(data => {
+        rank.rows = Object.entries(data || {}).filter(([, v]) => v && typeof v.nick === 'string' && v.served > 0)
+          .map(([id, v]) => ({ id, nick:v.nick.slice(0, 20), served:Math.floor(v.served), at:+v.at || 0 }))
+          .sort((a, b) => b.served - a.served || a.at - b.at);
+        rank.state = 'ok';
+      }).catch(() => { rank.state = 'fail'; }).then(() => { if (sheetKind === 'rank') { renderSheet(); } });
+  }
+  if (RANK_URL) {
+    setInterval(() => rankSend(false), RANK_EVERY);
+    document.addEventListener('visibilitychange', () => { if (document.hidden) rankSend(true); });   // 나갈 때 한 번 더
   }
   const banner = document.getElementById('banner'); let bannerTimer = 0;
   function announce(text) {
@@ -997,15 +1048,33 @@
   // 온천방 2(Lv.30 방)에서는 다른 방이 이미 쓰는 탕을 못 골라요 (그냥 탕은 어디서나 돼요)
   const isRoom2 = k => k === 'm2' || k === 'f2';
   const usedBy = (id, key) => id !== 'base' && isRoom2(key) ? ROOM_KEYS.find(k => k !== key && save.rooms[k].water === id) : undefined;
+  const esc = t => t.replace(/[&<>"]/g, ch => ({'&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;'}[ch]));
   function renderSheet() {
     showMoney();
+    if (sheetKind === 'rank') {               // 랭킹: 손님을 많이 맞이한 온천 순서
+      sheetList.dataset.kind = 'rank';
+      document.getElementById('sheetTitle').textContent = '랭킹';
+      sheetTabs.innerHTML = '';
+      const medal = ['🥇', '🥈', '🥉'];
+      const line = (no, r, me) => `<div class="rankrow${me ? ' me' : ''}"><span class="no${no >= 1 && no <= 3 ? ' top' : ''}">${no >= 1 && no <= 3 ? medal[no - 1] : no || '–'}</span><span class="who">${esc(r.nick)}${me ? '<small>나</small>' : ''}</span><span class="n"><b>Lv.${levelOf(r.served)}</b>손님 ${r.served.toLocaleString('ko-KR')}명</span></div>`;
+      const mine = { id:save.uid, nick:rankNick(), served };
+      const rows = rank.rows || [], at = rows.findIndex(r => r.id === save.uid);
+      const list = rows.map((r, i) => line(i + 1, i === at ? mine : r, i === at)).join('');
+      const tail = at >= 0 ? '' : served < 1 ? '<div class="desc" style="font-size:3.3cqw;opacity:.75;text-align:center">손님을 한 명 맞이하면 내 온천도 랭킹에 올라가요</div>'
+        : `<div class="sub">내 기록${rows.length >= RANK_TOP ? ` (${RANK_TOP}위 밖)` : ''}</div>` + line(0, mine, true);
+      sheetList.innerHTML = !RANK_URL ? '<div class="empty">랭킹 서버가 아직 연결되지 않았어요.</div><div class="sub">내 기록</div>' + line(0, mine, true)
+        : !rank.rows ? `<div class="empty">${rank.state === 'fail' ? '랭킹을 불러오지 못했어요.<br>인터넷 연결을 확인해 주세요.' : '랭킹을 불러오는 중…'}</div>` + (rank.state === 'fail' ? '<button class="act wide" data-rankload="1">다시 불러오기</button>' : '')
+        : `<div class="avg">손님을 많이 맞이한 온천 ${RANK_TOP}곳</div>` + (list || '<div class="empty">아직 아무도 없어요. 첫 번째가 되어 보세요!</div>') + tail
+          + (rank.state === 'fail' ? '<div class="desc" style="font-size:3.3cqw;opacity:.75;text-align:center">새로 불러오지 못해서 조금 전 순위를 보여 드려요</div>' : '')
+          + `<button class="act wide" data-rankload="1" ${rank.state === 'loading' ? 'disabled' : ''}>${rank.state === 'loading' ? '불러오는 중…' : '새로 고침'}</button>`;
+      return;
+    }
     if (sheetKind === 'settings') {           // 설정: 소리 크기 (끌고 있는 중에는 다시 그리지 않아요)
       if (sheetList.dataset.kind === 'settings') return;
       sheetList.dataset.kind = 'settings';
       document.getElementById('sheetTitle').textContent = '설정';
       sheetTabs.innerHTML = '';
       const slider = (id, label, v) => `<div class="setrow"><label for="${id}">${label}</label><input type="range" id="${id}" min="0" max="100" step="5" value="${Math.round(v * 100)}"><output id="${id}Out">${Math.round(v * 100)}</output></div>`;
-      const esc = t => t.replace(/[&<>"]/g, ch => ({'&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;'}[ch]));
       sheetList.innerHTML = `<div class="setrow" style="grid-template-columns:auto 1fr auto"><label>닉네임</label><b style="font-size:4.4cqw;overflow-wrap:anywhere;min-width:0">${esc(save.nick)}</b><button class="act" data-nick="1">바꾸기</button></div>` + slider('volFx', '효과음', save.vol.fx) + slider('volBgm', '배경음악', save.vol.bgm) + slider('volAmb', '온천 소리', save.vol.amb)
         + '<div class="desc" style="font-size:3.3cqw;opacity:.75;text-align:center">0으로 내리면 소리가 꺼져요</div>'
         + '<button class="act wide" data-replay="1">처음 안내 다시 보기</button>';
@@ -1072,6 +1141,7 @@
   document.getElementById('review').addEventListener('click', () => { save.unread = 0; keep(); showReviewDot(); openSheet('review'); });
   showReviewDot();
   document.getElementById('gear').addEventListener('click', () => openSheet('settings'));
+  document.getElementById('rank').addEventListener('click', () => { openSheet('rank'); rankLoad(); renderSheet(); });
   sheetList.addEventListener('input', e => {             // 소리 크기 막대
     const t = e.target; if (t.id !== 'volFx' && t.id !== 'volAmb' && t.id !== 'volBgm') return;
     const v = t.value / 100; document.getElementById(t.id + 'Out').textContent = t.value;
@@ -1092,6 +1162,7 @@
     const b = e.target.closest('button'); if (!b || b.disabled) return;
     if (b.dataset.replay) { closeSheet(); startTutorial(); return; }
     if (b.dataset.nick) { askNick(false); return; }
+    if (b.dataset.rankload) { rankLoad(); renderSheet(); return; }
     if (b.dataset.tab) { if (sheetKind === 'book') bookTab = b.dataset.tab; else shopTab = b.dataset.tab; sheetList.scrollTop = 0; }
     else if (b.dataset.buy) {
       const it = ITEMS.find(i => i.id === b.dataset.buy);
@@ -1397,7 +1468,7 @@
     { text:'또덕이가 음식을 시키면\n아래 칸에서 눌러서 주면 돼요.\n이제 반대로 밀어 카운터로 돌아가요', target:() => scene, hand:() => tutSide < 0 ? 'right' : 'left', done:atLobby },
     { text:'옆으로 계속 밀면 온천방 2와\n맨 끝의 휴게실이 나와요.\n휴게실 쓰레기통이 차면 눌러서 비워 줘요', target:() => scene, ok:true },
     { text:'여기는 상점이에요.\n수건, 샴푸, 음식, 새 탕을 살 수 있어요', target:() => document.getElementById('shop'), ok:true, done:() => sheetKind === 'shop' },
-    { text:'책은 단골 도감, 말풍선은 손님 리뷰,\n톱니바퀴는 소리 설정이에요.\n준비 끝! 또덕이 온천을 잘 부탁해요', target:() => document.querySelector('.dock'), ok:true },
+    { text:'책은 단골 도감, 말풍선은 손님 리뷰,\n트로피는 랭킹, 톱니바퀴는 설정이에요.\n준비 끝! 또덕이 온천을 잘 부탁해요', target:() => document.querySelector('.dock'), ok:true },
   ];
   function showTutStep() {
     const st = TUT[tutAt];
@@ -1639,6 +1710,7 @@
     save.nick = name; keep(); nickOpen = false; nickEl.hidden = true; nickInput.blur();
     announce(nickFirst ? `${name} 사장님, 어서 오세요!` : `닉네임을 ${name}(으)로 바꿨어요`);
     if (sheetKind === 'settings') { sheetList.dataset.kind = ''; renderSheet(); }
+    rankSend(true);                                              // 바꾼 닉네임을 랭킹에도 알려요
     if (nickFirst && !save.tut) startTutorial();
   });
   function clock() {
